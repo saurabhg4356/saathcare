@@ -1,1 +1,57 @@
-node_modules
+# ==============================================================================
+# SAATHCARE MASTER .GITIGNORE
+# ==============================================================================
+
+# Dependencies
+node_modules/
+**/node_modules/
+.pnp/
+.pnp.js
+
+# Production & Build Artifacts
+dist/
+**/dist/
+build/
+**/build/
+out/
+**/out/
+
+# Environment Variables & Secrets (CRITICAL: Never commit secrets)
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+**/logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Testing & Coverage
+coverage/
+**/coverage/
+*.lcov
+.nyc_output/
+
+# Operating System & Editor Metadata
+.DS_Store
+Thumbs.db
+ehthumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*~
+
+# Temporary & Scratch Dirs
+tmp/
+temp/
+scratch/
+.cache/
+**/node_modules/.cache/
