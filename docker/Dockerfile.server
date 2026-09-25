@@ -1,0 +1,33 @@
+# ==============================================================================
+# SAATHCARE BACKEND PRODUCTION DOCKERFILE
+# ==============================================================================
+
+FROM node:20-alpine AS base
+
+WORKDIR /app
+
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies (including dev tools for build, omitting optional binary bloat)
+RUN npm ci --omit=optional
+
+# Copy application source code
+COPY src/ ./src/
+
+# Use unprivileged user for runtime security
+USER node
+
+EXPOSE 5000
+
+ENV NODE_ENV=production
+ENV PORT=5000
+
+# Health check probing the /health endpoint
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:5000/health || exit 1
+
+CMD ["node", "src/server.js"]

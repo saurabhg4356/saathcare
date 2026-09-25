@@ -1,0 +1,13 @@
+export const SPLIT_TYPE = Object.freeze({
+  EQUAL: 'EQUAL',
+  CUSTOM: 'CUSTOM'
+});
+
+export const EXPENSE_CATEGORIES = Object.freeze({
+  MEDICINE: 'MEDICINE',
+  DOCTOR: 'DOCTOR',
+  GROCERY: 'GROCERY',
+  CAREGIVER: 'CAREGIVER',
+  EQUIPMENT: 'EQUIPMENT',
+  OTHER: 'OTHER'
+});

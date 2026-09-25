@@ -1,0 +1,31 @@
+{
+  "name": "saathcare-monorepo",
+  "version": "1.0.0",
+  "description": "SaathCare — Shared elder-care coordination and cost-ledger platform",
+  "private": true,
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "dev": "npm --prefix server run dev",
+    "build:server": "npm --prefix server run build",
+    "build:client": "npm --prefix client run build",
+    "build": "npm run build:server && npm run build:client",
+    "test:server": "npm --prefix server test",
+    "test": "npm run test:server",
+    "install:all": "npm install && npm --prefix server install && npm --prefix client install"
+  },
+  "keywords": [
+    "elder-care",
+    "expense-ledger",
+    "task-management",
+    "mern",
+    "socket.io",
+    "settlement-algorithm"
+  ],
+  "author": "SaathCare Core Team",
+  "license": "MIT"
+}
