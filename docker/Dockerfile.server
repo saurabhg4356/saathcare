@@ -12,8 +12,8 @@ RUN apk add --no-cache curl
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies (including dev tools for build, omitting optional binary bloat)
-RUN npm ci --omit=optional
+# Install production dependencies
+RUN npm install --omit=dev --omit=optional
 
 # Copy application source code
 COPY src/ ./src/
