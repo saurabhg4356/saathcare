@@ -1,5 +1,6 @@
 import { MockEmailProvider } from './mockEmailProvider.js';
 import { SmtpEmailProvider } from './smtpEmailProvider.js';
+import { GmailEmailProvider } from './gmailEmailProvider.js';
 import { env } from '../../config/env.js';
 import { logger } from '../../config/logger.js';
 
@@ -8,7 +9,9 @@ let providerInstance = null;
 function getEmailProvider() {
   if (providerInstance) return providerInstance;
 
-  if (env.EMAIL?.PROVIDER === 'smtp') {
+  if (env.EMAIL?.PROVIDER === 'gmail' || (env.EMAIL?.GMAIL_USER && env.EMAIL?.GMAIL_REFRESH_TOKEN)) {
+    providerInstance = new GmailEmailProvider();
+  } else if (env.EMAIL?.PROVIDER === 'smtp') {
     providerInstance = new SmtpEmailProvider();
   } else {
     providerInstance = new MockEmailProvider();

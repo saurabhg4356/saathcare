@@ -36,7 +36,11 @@ const envSchema = z.object({
   MISSED_TASK_JOB_ENABLED: z.coerce.boolean().default(true),
 
   // Email Infrastructure
-  EMAIL_PROVIDER: z.enum(['mock', 'smtp']).default('mock'),
+  EMAIL_PROVIDER: z.enum(['mock', 'smtp', 'gmail']).default('mock'),
+  GMAIL_USER: z.string().optional(),
+  GMAIL_CLIENT_ID: z.string().optional(),
+  GMAIL_CLIENT_SECRET: z.string().optional(),
+  GMAIL_REFRESH_TOKEN: z.string().optional(),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().optional(),
   SMTP_USER: z.string().optional(),
@@ -95,6 +99,10 @@ export const env = {
 
   EMAIL: {
     PROVIDER: validated.EMAIL_PROVIDER,
+    GMAIL_USER: validated.GMAIL_USER,
+    GMAIL_CLIENT_ID: validated.GMAIL_CLIENT_ID,
+    GMAIL_CLIENT_SECRET: validated.GMAIL_CLIENT_SECRET,
+    GMAIL_REFRESH_TOKEN: validated.GMAIL_REFRESH_TOKEN,
     SMTP_HOST: validated.SMTP_HOST,
     SMTP_PORT: validated.SMTP_PORT,
     SMTP_USER: validated.SMTP_USER,
