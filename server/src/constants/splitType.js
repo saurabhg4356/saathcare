@@ -6,7 +6,10 @@ export const SPLIT_TYPE = Object.freeze({
 export const EXPENSE_CATEGORIES = Object.freeze({
   MEDICINE: 'MEDICINE',
   DOCTOR: 'DOCTOR',
+  FOOD: 'FOOD',
   GROCERY: 'GROCERY',
+  TRANSPORT: 'TRANSPORT',
+  BILLS: 'BILLS',
   CAREGIVER: 'CAREGIVER',
   EQUIPMENT: 'EQUIPMENT',
   OTHER: 'OTHER'

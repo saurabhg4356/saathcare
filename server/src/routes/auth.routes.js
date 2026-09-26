@@ -32,4 +32,7 @@ router.post('/reset-password/:token', authLimiter, validate(resetPasswordSchema)
 router.post('/request-deletion', authenticateUser, AuthController.requestDeletion);
 router.post('/cancel-deletion', authenticateUser, AuthController.cancelDeletion);
 
+// Interactive onboarding tour completed status
+router.patch('/onboarding', authenticateUser, AuthController.completeOnboarding);
+
 export default router;

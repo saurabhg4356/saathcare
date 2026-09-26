@@ -27,7 +27,22 @@ const familyGroupSchema = new mongoose.Schema(
         ref: 'User',
         required: true
       }
-    ]
+    ],
+    careInfo: {
+      emergencyContact: {
+        name: { type: String, trim: true, maxlength: 100, default: '' },
+        phone: { type: String, trim: true, maxlength: 30, default: '' },
+        relationship: { type: String, trim: true, maxlength: 50, default: '' }
+      },
+      primaryDoctor: {
+        name: { type: String, trim: true, maxlength: 100, default: '' },
+        phone: { type: String, trim: true, maxlength: 30, default: '' },
+        hospital: { type: String, trim: true, maxlength: 150, default: '' }
+      },
+      bloodGroup: { type: String, trim: true, maxlength: 10, default: '' },
+      allergies: { type: [String], default: [] },
+      importantNotes: { type: String, trim: true, maxlength: 1000, default: '' }
+    }
   },
   {
     timestamps: true,

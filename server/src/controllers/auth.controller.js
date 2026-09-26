@@ -161,4 +161,15 @@ export class AuthController {
       next(error);
     }
   }
+
+  static async completeOnboarding(req, res, next) {
+    try {
+      const user = await AuthService.completeOnboarding(req.user._id);
+      return res.status(200).json(
+        ApiResponse.success({ hasSeenOnboarding: user.hasSeenOnboarding }, 'Onboarding marked as completed')
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
 }

@@ -179,4 +179,22 @@ export class FamilyService {
       invite
     };
   }
+
+  /**
+   * Updates care recipient sensitive details (emergency contacts, primary doctor)
+   */
+  static async updateCareInfo(familyGroupId, careInfoData) {
+    const group = await FamilyGroup.findByIdAndUpdate(
+      familyGroupId,
+      { $set: { careInfo: careInfoData } },
+      { new: true, runValidators: true }
+    )
+      .populate('members', 'name email')
+      .populate('createdBy', 'name email');
+
+    if (!group) {
+      throw ApiError.notFound('Family group not found');
+    }
+    return group;
+  }
 }

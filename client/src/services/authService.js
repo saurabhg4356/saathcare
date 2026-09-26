@@ -58,5 +58,10 @@ export const authService = {
   async cancelDeletion() {
     const res = await api.post('/auth/cancel-deletion');
     return res.data;
+  },
+
+  async completeOnboarding() {
+    const res = await api.patch('/auth/onboarding', { hasSeenOnboarding: true });
+    return res.data;
   }
 };

@@ -53,6 +53,10 @@ const userSchema = new mongoose.Schema(
     deletionScheduledAt: {
       type: Date,
       default: null
+    },
+    hasSeenOnboarding: {
+      type: Boolean,
+      default: false
     }
   },
   {

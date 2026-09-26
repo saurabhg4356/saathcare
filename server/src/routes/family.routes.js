@@ -28,4 +28,7 @@ router.post(
 );
 router.get('/:familyGroupId/invites', authenticateUser, familyMembershipMiddleware, FamilyController.getPendingInvites);
 
+// Care Recipient Sensitive Details (Protected by family boundary)
+router.patch('/:familyGroupId/care-info', authenticateUser, familyMembershipMiddleware, FamilyController.updateCareInfo);
+
 export default router;

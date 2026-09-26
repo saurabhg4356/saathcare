@@ -38,5 +38,10 @@ export const familyService = {
   async acceptInvite(token) {
     const res = await api.post(`/family-groups/invites/${token}/accept`);
     return res.data;
+  },
+
+  async updateCareInfo(familyGroupId, careInfo) {
+    const res = await api.patch(`/family-groups/${familyGroupId}/care-info`, { careInfo });
+    return res.data;
   }
 };

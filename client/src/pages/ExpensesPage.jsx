@@ -4,9 +4,11 @@ import { useSocket } from '../context/SocketContext.jsx';
 import { expenseService } from '../services/expenseService.js';
 import { formatPaiseToINR } from '../utils/currency.js';
 import { formatDateTime } from '../utils/date.js';
-import { Receipt, Plus, RotateCcw, AlertTriangle, ShieldCheck, ChevronDown, FileText } from 'lucide-react';
+import { Receipt, Plus, RotateCcw, AlertTriangle, ShieldCheck, ChevronDown, FileText, Filter } from 'lucide-react';
 import { AddExpenseModal } from '../components/modals/AddExpenseModal.jsx';
 import { ReverseExpenseModal } from '../components/modals/ReverseExpenseModal.jsx';
+import { ReceiptPreviewModal } from '../components/modals/ReceiptPreviewModal.jsx';
+import { EXPENSE_CATEGORIES } from '../utils/constants.js';
 
 export function ExpensesPage() {
   const { activeGroup } = useFamily();
@@ -14,10 +16,12 @@ export function ExpensesPage() {
 
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [categoryFilter, setCategoryFilter] = useState('');
 
-  // Modals
+  // Modals & Preview
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedForReversal, setSelectedForReversal] = useState(null);
+  const [previewReceipt, setPreviewReceipt] = useState(null);
 
   const fetchExpenses = useCallback(async () => {
     if (!activeGroup?._id) return;
@@ -57,11 +61,11 @@ export function ExpensesPage() {
     };
   }, [activeGroup?._id, subscribe, fetchExpenses]);
 
-  const handleViewReceipt = async (expenseId) => {
+  const handleViewReceipt = async (entry) => {
     try {
-      const res = await expenseService.getReceiptUrl(activeGroup._id, expenseId);
+      const res = await expenseService.getReceiptUrl(activeGroup._id, entry._id);
       if (res?.data?.signedUrl) {
-        window.open(res.data.signedUrl, '_blank', 'noopener,noreferrer');
+        setPreviewReceipt({ url: res.data.signedUrl, expense: entry });
       }
     } catch (err) {
       alert(err.message || 'Failed to retrieve receipt URL');
@@ -128,6 +132,32 @@ export function ExpensesPage() {
         </div>
       </div>
 
+      {/* Category Filter Pills */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+        <button
+          type="button"
+          className={`btn btn-sm ${categoryFilter === '' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => setCategoryFilter('')}
+          style={{ fontSize: '0.75rem', padding: '0.35rem 0.65rem' }}
+        >
+          All Categories ({expenses.length})
+        </button>
+        {Object.values(EXPENSE_CATEGORIES).map(cat => {
+          const count = expenses.filter(e => e.category === cat).length;
+          return (
+            <button
+              key={cat}
+              type="button"
+              className={`btn btn-sm ${categoryFilter === cat ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setCategoryFilter(cat)}
+              style={{ fontSize: '0.75rem', padding: '0.35rem 0.65rem' }}
+            >
+              {cat} {count > 0 && `(${count})`}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Ledger Table */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '4rem 0' }}>
@@ -160,7 +190,7 @@ export function ExpensesPage() {
               </tr>
             </thead>
             <tbody>
-              {expenses.map(entry => {
+              {filteredExpenses.map(entry => {
                 const isReversed = reversedOriginalIds.has(entry._id.toString());
                 const isReversalEntry = entry.isReversal;
 
@@ -189,7 +219,7 @@ export function ExpensesPage() {
                         <div style={{ marginTop: '0.35rem' }}>
                           <button
                             type="button"
-                            onClick={() => handleViewReceipt(entry._id)}
+                            onClick={() => handleViewReceipt(entry)}
                             style={{
                               background: 'none',
                               border: 'none',
@@ -275,6 +305,12 @@ export function ExpensesPage() {
         onClose={() => setSelectedForReversal(null)}
         expense={selectedForReversal}
         onExpenseReversed={() => fetchExpenses()}
+      />
+      <ReceiptPreviewModal
+        isOpen={Boolean(previewReceipt)}
+        onClose={() => setPreviewReceipt(null)}
+        receiptUrl={previewReceipt?.url}
+        expense={previewReceipt?.expense}
       />
     </div>
   );

@@ -18,6 +18,14 @@ export class SocketEmitter {
     logger.debug(`Broadcasted ${eventName} to room ${room}`, { payloadSummary: typeof payload });
   }
 
+  static emitToUser(userId, eventName, payload) {
+    const io = getIO();
+    if (!io || !userId) return;
+    const room = `user:${userId.toString()}`;
+    io.to(room).emit(eventName, payload);
+    logger.debug(`Sent ${eventName} to user room ${room}`);
+  }
+
   static emitTaskCreated(familyGroupId, task) {
     this.emitToFamily(familyGroupId, SOCKET_EVENTS.TASK_CREATED, { task });
   }

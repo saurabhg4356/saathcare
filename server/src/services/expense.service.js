@@ -8,6 +8,8 @@ import { NotificationService } from './notification.service.js';
 import { NOTIFICATION_TYPE } from '../models/NotificationOutbox.js';
 import { EmailService } from './email/index.js';
 
+import { InAppNotificationService } from './inAppNotification.service.js';
+
 export class ExpenseService {
   /**
    * Distributes total paise equally among participant IDs, distributing remainder paise evenly
@@ -100,14 +102,27 @@ export class ExpenseService {
       });
 
       for (const member of group.members) {
-        if (member._id.toString() !== creatorUserId.toString() && member.email) {
-          await NotificationService.enqueue({
-            type: NOTIFICATION_TYPE.EXPENSE_ADDED,
-            recipient: member.email,
-            familyGroupId: group._id,
+        if (member._id.toString() !== creatorUserId.toString()) {
+          // In-app notification
+          InAppNotificationService.createNotification({
             userId: member._id,
-            payload: template
-          });
+            familyGroupId: group._id,
+            title: 'New Expense Logged',
+            message: `${payerName} logged ${amountRupees} for "${description}"`,
+            type: 'EXPENSE_ADDED',
+            link: '/expenses'
+          }).catch(() => {});
+
+          // Email notification via outbox
+          if (member.email) {
+            await NotificationService.enqueue({
+              type: NOTIFICATION_TYPE.EXPENSE_ADDED,
+              recipient: member.email,
+              familyGroupId: group._id,
+              userId: member._id,
+              payload: template
+            });
+          }
         }
       }
     } catch (notifErr) {

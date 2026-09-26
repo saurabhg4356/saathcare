@@ -18,15 +18,19 @@ import {
   Clock,
   ArrowUpRight,
   ArrowDownLeft,
-  ChevronRight
+  ChevronRight,
+  HelpCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CreateTaskModal } from '../components/modals/CreateTaskModal.jsx';
 import { AddExpenseModal } from '../components/modals/AddExpenseModal.jsx';
 import { InviteMemberModal } from '../components/modals/InviteMemberModal.jsx';
+import { OnboardingTour } from '../components/common/OnboardingTour.jsx';
+import { CareInfoCard } from '../components/dashboard/CareInfoCard.jsx';
+import { CategoryExpenseAnalytics } from '../components/dashboard/CategoryExpenseAnalytics.jsx';
 
 export function DashboardPage() {
-  const { activeGroup } = useFamily();
+  const { activeGroup, refreshGroups } = useFamily();
   const { user } = useAuth();
   const { subscribe } = useSocket();
 
@@ -35,10 +39,17 @@ export function DashboardPage() {
   const [settlementData, setSettlementData] = useState({ balances: [], settlements: [] });
   const [loading, setLoading] = useState(true);
 
-  // Modals
+  // Modals & Tour
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+
+  useEffect(() => {
+    if (user && user.hasSeenOnboarding === false) {
+      setIsOnboardingOpen(true);
+    }
+  }, [user]);
 
   const loadDashboardData = useCallback(async () => {
     if (!activeGroup?._id) return;
@@ -134,6 +145,15 @@ export function DashboardPage() {
 
         {/* Quick Action Buttons */}
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => setIsOnboardingOpen(true)}
+            title="Getting Started Guide"
+          >
+            <HelpCircle size={15} />
+            Tour Guide
+          </button>
           <button
             type="button"
             className="btn btn-secondary btn-sm"
@@ -246,6 +266,15 @@ export function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Care Recipient & Important Emergency Info */}
+      <CareInfoCard
+        familyGroup={activeGroup}
+        onCareInfoUpdated={() => refreshGroups(activeGroup?._id)}
+      />
+
+      {/* Expense Spending Analytics */}
+      <CategoryExpenseAnalytics expenses={expenses} />
 
       {/* Two Column Layout: Urgent Duties & Recent Ledger */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem' }}>
@@ -379,6 +408,12 @@ export function DashboardPage() {
       <InviteMemberModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
+      />
+
+      <OnboardingTour
+        isOpen={isOnboardingOpen}
+        onClose={() => setIsOnboardingOpen(false)}
+        onComplete={() => setIsOnboardingOpen(false)}
       />
     </div>
   );

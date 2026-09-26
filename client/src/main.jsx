@@ -10,7 +10,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 );
 
 // Register Progressive Web App (PWA) Service Worker in production
-if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+if ('serviceWorker' in navigator && (import.meta.env?.PROD || process.env.NODE_ENV === 'production')) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/sw.js')

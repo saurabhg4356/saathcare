@@ -87,4 +87,15 @@ export class FamilyController {
       next(error);
     }
   }
+
+  static async updateCareInfo(req, res, next) {
+    try {
+      const group = await FamilyService.updateCareInfo(req.params.familyGroupId, req.body);
+      return res.status(200).json(
+        ApiResponse.success(group, 'Care recipient information updated successfully')
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
 }

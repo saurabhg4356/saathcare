@@ -29,6 +29,11 @@ export function initSocketServer(httpServer) {
   io.on('connection', (socket) => {
     logger.info(`Socket client connected: ${socket.id}`, { user: socket.user });
 
+    // Join authenticated user's private notification channel
+    if (socket.user?._id) {
+      socket.join(`user:${socket.user._id.toString()}`);
+    }
+
     // Join family group room with strict membership check
     socket.on(SOCKET_EVENTS.JOIN_FAMILY, async (data) => {
       try {

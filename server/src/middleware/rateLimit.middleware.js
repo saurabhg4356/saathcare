@@ -31,3 +31,18 @@ export const authLimiter = rateLimit({
     );
   }
 });
+
+/**
+ * Stricter rate limiter for contact form inquiries (anti-spam)
+ */
+export const contactLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // max 5 submissions per 15 min
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json(
+      ApiResponse.error('Too many inquiries submitted from this IP, please try again later', 'CONTACT_RATE_LIMIT_EXCEEDED')
+    );
+  }
+});

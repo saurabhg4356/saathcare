@@ -236,6 +236,7 @@ For deep-dive technical explanations and interview preparation, consult the `doc
 - [docs/testing.md](file:///c:/SaathCare/docs/testing.md) — Test strategy, coverage criteria, and test matrix.
 - [docs/deployment.md](file:///c:/SaathCare/docs/deployment.md) — Step-by-step production deployment for Render, Vercel, Atlas, and future AWS topology.
 - [docs/production-hardening.md](file:///c:/SaathCare/docs/production-hardening.md) — Hardened subsystems, outbox patterns, idempotency, and security.
+- [docs/website-addons.md](file:///c:/SaathCare/docs/website-addons.md) — Complete documentation of Website Add-ons & Product Enhancements (Phases 1–19).
 - [docs/interview-notes.md](file:///c:/SaathCare/docs/interview-notes.md) — Senior software engineering interview questions (Q1–Q22) and design trade-offs.
 
 ---

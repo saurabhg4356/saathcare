@@ -5,6 +5,8 @@ import { useFamily } from '../../context/FamilyContext.jsx';
 import { useSocket } from '../../context/SocketContext.jsx';
 import { Users, Plus, LogOut, ChevronDown, Activity, HeartHandshake } from 'lucide-react';
 import { CreateGroupModal } from '../modals/CreateGroupModal.jsx';
+import { ThemeToggle } from '../common/ThemeToggle.jsx';
+import { NotificationDrawer } from '../common/NotificationDrawer.jsx';
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -146,8 +148,8 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Right side actions: Socket status, user profile, logout */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          {/* Right side actions: Socket status, notifications, theme toggle, user profile, logout */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
             {/* Live Socket Status */}
             <div style={{
               display: 'flex',
@@ -170,6 +172,12 @@ export function Navbar() {
                 {isConnected ? 'Live Sync' : 'Reconnecting'}
               </span>
             </div>
+
+            {/* In-App Notifications */}
+            {user && <NotificationDrawer />}
+
+            {/* Light / Dark Mode Toggle */}
+            <ThemeToggle />
 
             {/* User Profile & Logout */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>

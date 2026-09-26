@@ -4,8 +4,9 @@ import { useSocket } from '../context/SocketContext.jsx';
 import { taskService } from '../services/taskService.js';
 import { formatDateTime, getRelativeDueLabel } from '../utils/date.js';
 import { TASK_STATUS } from '../utils/constants.js';
-import { CheckSquare, Plus, CheckCircle2, AlertCircle, Clock, Filter, User } from 'lucide-react';
+import { CheckSquare, Plus, CheckCircle2, AlertCircle, Clock, Filter, User, List, Calendar } from 'lucide-react';
 import { CreateTaskModal } from '../components/modals/CreateTaskModal.jsx';
+import { TaskCalendar } from '../components/calendar/TaskCalendar.jsx';
 import { generateUUID } from '../utils/uuid.js';
 
 export function TasksPage() {
@@ -17,6 +18,7 @@ export function TasksPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [assigneeFilter, setAssigneeFilter] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'calendar'
 
   const fetchTasks = useCallback(async () => {
     if (!activeGroup?._id) return;
@@ -80,7 +82,7 @@ export function TasksPage() {
 
   return (
     <div>
-      {/* Header & Create Button */}
+      {/* Header & Create Button & View Switcher */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: '0.25rem' }}>
@@ -91,19 +93,51 @@ export function TasksPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => setIsCreateModalOpen(true)}
-        >
-          <Plus size={16} />
-          Assign New Duty
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', padding: '3px', border: '1px solid var(--border-subtle)' }}>
+            <button
+              type="button"
+              className={`btn btn-sm ${viewMode === 'list' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setViewMode('list')}
+              style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+            >
+              <List size={14} />
+              List
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${viewMode === 'calendar' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setViewMode('calendar')}
+              style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+            >
+              <Calendar size={14} />
+              Calendar
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            <Plus size={16} />
+            Assign New Duty
+          </button>
+        </div>
       </div>
 
-      {/* Filter Toolbar */}
-      <div className="card" style={{ padding: '1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+      {viewMode === 'calendar' ? (
+        <TaskCalendar
+          tasks={tasks}
+          onCompleteTask={handleComplete}
+          completingId={completingId}
+          onNewDuty={() => setIsCreateModalOpen(true)}
+        />
+      ) : (
+        <>
+          {/* Filter Toolbar */}
+          <div className="card" style={{ padding: '1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button
             type="button"
             className={`btn btn-sm ${statusFilter === '' ? 'btn-primary' : 'btn-secondary'}`}
@@ -249,6 +283,8 @@ export function TasksPage() {
             );
           })}
         </div>
+      )}
+        </>
       )}
 
       <CreateTaskModal

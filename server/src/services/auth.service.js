@@ -360,6 +360,19 @@ export class AuthService {
     userData.pendingDeletion = !!user.pendingDeletion;
     userData.deletionScheduledAt = user.deletionScheduledAt;
     userData.isVerified = !!user.isVerified;
+    userData.hasSeenOnboarding = !!user.hasSeenOnboarding;
     return userData;
+  }
+
+  /**
+   * Sets hasSeenOnboarding flag to true for user
+   */
+  static async completeOnboarding(userId) {
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: { hasSeenOnboarding: true } },
+      { new: true }
+    );
+    return user;
   }
 }

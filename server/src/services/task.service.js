@@ -5,6 +5,7 @@ import { ApiError } from '../utils/apiError.js';
 import { NotificationService } from './notification.service.js';
 import { NOTIFICATION_TYPE } from '../models/NotificationOutbox.js';
 import { EmailService } from './email/index.js';
+import { InAppNotificationService } from './inAppNotification.service.js';
 
 export class TaskService {
   /**
@@ -36,6 +37,22 @@ export class TaskService {
     const populatedTask = await Task.findById(task._id)
       .populate('assigneeId', 'name email')
       .populate('createdBy', 'name email');
+
+    // Queue in-app notification for assignee
+    try {
+      if (populatedTask.assigneeId?._id) {
+        await InAppNotificationService.createNotification({
+          userId: populatedTask.assigneeId._id,
+          familyGroupId,
+          title: 'New Care Duty Assigned',
+          message: `You were assigned duty: "${populatedTask.title}"`,
+          type: 'TASK_ASSIGNED',
+          link: '/tasks'
+        });
+      }
+    } catch (notifErr) {
+      // Non-blocking
+    }
 
     // Asynchronously queue notification to assignee via Outbox
     try {
@@ -142,6 +159,22 @@ export class TaskService {
     task.completedAt = new Date();
 
     await task.save();
+
+    // Notify task creator if someone else completed it
+    try {
+      if (task.createdBy && task.createdBy.toString() !== completedByUserId.toString()) {
+        await InAppNotificationService.createNotification({
+          userId: task.createdBy,
+          familyGroupId,
+          title: 'Care Duty Completed',
+          message: `Duty "${task.title}" has been marked completed.`,
+          type: 'TASK_COMPLETED',
+          link: '/tasks'
+        });
+      }
+    } catch (notifErr) {
+      // Non-blocking
+    }
 
     return Task.findById(task._id)
       .populate('assigneeId', 'name email')
