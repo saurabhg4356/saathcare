@@ -34,7 +34,14 @@ When siblings and relatives live across different cities or countries, caring fo
 - **Paise Precision**: All currency math runs in integer paise (1 INR = 100 paise), eliminating IEEE 754 floating-point drift.
 - **Greedy Debt-Minimization Settlement Engine**: Computes the minimum number of peer-to-peer bank/UPI transfers needed to square all debts in $O(N \log N)$ time.
 - **Strict Family Boundary Security**: `familyMembershipMiddleware` ensures zero cross-tenant data leaks between family groups.
-- **Enterprise Authentication**: JWT access tokens, refresh token rotation with SHA-256 reuse detection, and HTTP-only cookie security.
+- **Enterprise Authentication & Token Hashing**: JWT access tokens, refresh token rotation, SHA-256 hashed verification and password reset tokens, and HTTP-only cookie security.
+- **Financial Idempotency Middleware**: `X-Idempotency-Key` with MongoDB atomic reservations and 24-hour TTL caching, eliminating duplicate billing during network timeouts.
+- **Decoupled Notification Outbox**: Transactional email dispatch with exponential backoff (`outboxWorker`), eliminating the dual-write problem and third-party latency.
+- **Bill & Receipt Attachments**: Sandboxed file uploads with Multer, MIME whitelisting, and S3 pre-signed URLs without breaking ledger immutability.
+- **Distributed Cron Locking**: Cluster-wide lease management (`DistributedLock`) preventing duplicate background jobs across multi-replica deployments.
+- **Observability & Request Correlation**: `X-Request-Id` tracing, structured JSON access logging, and hierarchical error taxonomy.
+- **GDPR-Compliant Account Deletion**: 3-day grace period with full PII anonymization while strictly preserving historical financial ledger integrity.
+- **Progressive Web App (PWA)**: Offline service worker caching, network reconnect refetching, and WCAG-compliant $\ge 44\text{px}$ touch targets.
 
 ---
 
@@ -228,7 +235,8 @@ For deep-dive technical explanations and interview preparation, consult the `doc
 - [docs/security.md](file:///c:/SaathCare/docs/security.md) — Threat mitigation matrix, token rotation, and family isolation guards.
 - [docs/testing.md](file:///c:/SaathCare/docs/testing.md) — Test strategy, coverage criteria, and test matrix.
 - [docs/deployment.md](file:///c:/SaathCare/docs/deployment.md) — Step-by-step production deployment for Render, Vercel, Atlas, and future AWS topology.
-- [docs/interview-notes.md](file:///c:/SaathCare/docs/interview-notes.md) — Senior software engineering interview questions and design trade-offs.
+- [docs/production-hardening.md](file:///c:/SaathCare/docs/production-hardening.md) — Hardened subsystems, outbox patterns, idempotency, and security.
+- [docs/interview-notes.md](file:///c:/SaathCare/docs/interview-notes.md) — Senior software engineering interview questions (Q1–Q22) and design trade-offs.
 
 ---
 

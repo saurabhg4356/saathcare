@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Modal } from '../common/Modal.jsx';
 import { familyService } from '../../services/familyService.js';
 import { useFamily } from '../../context/FamilyContext.jsx';
-import { Copy, Check, Mail } from 'lucide-react';
+import { Copy, Check, Mail, Loader2 } from 'lucide-react';
+import { generateUUID } from '../../utils/uuid.js';
 
 export function InviteMemberModal({ isOpen, onClose, onInviteSent }) {
   const { activeGroup } = useFamily();
@@ -11,6 +12,14 @@ export function InviteMemberModal({ isOpen, onClose, onInviteSent }) {
   const [error, setError] = useState('');
   const [generatedInvite, setGeneratedInvite] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [idempotencyKey, setIdempotencyKey] = useState('');
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setIdempotencyKey(generateUUID());
+      setError('');
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,7 +32,7 @@ export function InviteMemberModal({ isOpen, onClose, onInviteSent }) {
     setError('');
 
     try {
-      const invite = await familyService.createInvite(activeGroup._id, email.trim());
+      const invite = await familyService.createInvite(activeGroup._id, email.trim(), idempotencyKey);
       setGeneratedInvite(invite);
       onInviteSent?.(invite);
     } catch (err) {

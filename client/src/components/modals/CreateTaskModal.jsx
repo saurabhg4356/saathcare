@@ -4,6 +4,8 @@ import { taskService } from '../../services/taskService.js';
 import { useFamily } from '../../context/FamilyContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 
+import { generateUUID } from '../../utils/uuid.js';
+
 export function CreateTaskModal({ isOpen, onClose, onTaskCreated }) {
   const { activeGroup } = useFamily();
   const { user } = useAuth();
@@ -18,8 +20,17 @@ export function CreateTaskModal({ isOpen, onClose, onTaskCreated }) {
     d.setHours(10, 0, 0, 0);
     return d.toISOString().slice(0, 16);
   });
+  const [idempotencyKey, setIdempotencyKey] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Generate unique idempotency key when modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      setIdempotencyKey(generateUUID());
+      setError('');
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,12 +47,16 @@ export function CreateTaskModal({ isOpen, onClose, onTaskCreated }) {
     setError('');
 
     try {
-      const task = await taskService.createTask(activeGroup._id, {
-        title: title.trim(),
-        description: description.trim(),
-        assigneeId,
-        dueAt: new Date(dueAt).toISOString()
-      });
+      const task = await taskService.createTask(
+        activeGroup._id,
+        {
+          title: title.trim(),
+          description: description.trim(),
+          assigneeId,
+          dueAt: new Date(dueAt).toISOString()
+        },
+        idempotencyKey
+      );
 
       setTitle('');
       setDescription('');

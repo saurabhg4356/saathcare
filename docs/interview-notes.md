@@ -88,3 +88,159 @@ Elder-care duty coordination and expense tracking involve semi-structured subdoc
 - Multi-member family teams and rotation rules map naturally to embedded documents and referenced arrays.
 - MongoDB document atomicity ensures that adding an expense and its complete split breakdown occurs in a single atomic write operation without complex multi-table joins.
 - At the same time, we enforced strict relational-grade integrity using Mongoose validation and compound indexes.
+
+---
+
+### Q10: How does the Notification Outbox pattern solve the dual-write problem when sending transactional emails?
+**Answer**:
+In distributed architectures, attempting to write to the database and call an external third-party API (like SendGrid or AWS SES) in the same HTTP request is known as the **dual-write problem**. If the database commit succeeds but the email API times out or fails, the user never gets notified; if the email sends first but the database rollback triggers, an email was sent for a phantom transaction.
+In SaathCare:
+1. When an event occurs (e.g., user registration, task assignment, password reset request), we write a record to the `NotificationOutbox` collection with `status: PENDING` in the same local database transaction or operation.
+2. The HTTP request responds immediately ($\sim 20\text{ms}$) without waiting for external SMTP handshakes.
+3. A background cron worker (`notificationOutbox.job.js`) polls for pending outbox items, updates their status atomically to `PROCESSING`, and dispatches them via the active `EmailProvider`.
+4. If the provider fails, the worker increments `attempts` and calculates an **exponential backoff delay**:
+   $$\text{delay} = \min(2^{\text{attempts}} \times 10\text{s}, 3600\text{s})$$
+5. This guarantees **at-least-once delivery** and insulates our API latency from third-party outages.
+
+---
+
+### Q11: How does your Idempotency Middleware prevent duplicate financial charges during network retries?
+**Answer**:
+When a client sends `POST /api/expenses` or `POST /api/expenses/settle-up`, poor mobile connectivity may cause the client to drop connection before receiving the HTTP response, prompting the client or user to retry.
+1. The client generates a unique UUID `v4` in the `X-Idempotency-Key` header and disables the submit button optimistically.
+2. The `idempotencyMiddleware` attempts to reserve the key in MongoDB with `status: PENDING`:
+   - If the key exists with `status: COMPLETED`, the server skips controller execution entirely and replays the cached status code and response payload with an `X-Cache: HIT` header.
+   - If the key exists with `status: PENDING`, a concurrent identical request is currently executing; the server responds with `409 Conflict`.
+   - If the key is new, the request proceeds through domain services.
+3. Upon completion, an Express response interceptor stores the HTTP status and JSON body into `IdempotencyKey` and flips the status to `COMPLETED`.
+4. Keys are automatically pruned after 24 hours using a MongoDB native TTL index (`expireAfterSeconds: 86400`).
+
+---
+
+### Q12: How does Node.js handle concurrency given its single-threaded event loop, and where do race conditions still occur?
+**Answer**:
+Node.js runs user JavaScript code on a single thread via the V8 event loop, delegating asynchronous I/O (file system, network, database queries) to the OS kernel or Libuv thread pool.
+- Because JavaScript execution is non-preemptive between synchronous instructions, synchronous code blocks never experience thread context switching or shared-memory data races.
+- However, **application-level race conditions** readily occur across asynchronous boundaries (`await` points). For example, between `const user = await User.findById(id)` and `await user.save()`, another request might have modified the user document.
+- In SaathCare, we prevent asynchronous race conditions using:
+  1. **Atomic database operators** (`$set`, `$inc`, `$push`) rather than read-modify-save patterns wherever possible.
+  2. **Unique database indexes** (e.g. idempotency keys, compound indexes).
+  3. **Atomic find-and-modify operations** (`findOneAndUpdate` with filter conditions).
+
+---
+
+### Q13: If traffic scales to millions of users, how would you migrate from in-process/MongoDB locks to Redis?
+**Answer**:
+While MongoDB-based locks and TTL indexes are completely sufficient for single-region, moderately loaded clusters:
+1. **Distributed Locks**: We would replace our MongoDB `DistributedLock` with **Redis Redlock** (via `ioredis` / `redlock`). Redis executes in-memory with sub-millisecond latency using single-threaded atomic Lua scripts, reducing database I/O overhead.
+2. **WebSocket Pub/Sub**: For real-time updates across multiple Node.js server pods behind a load balancer, we would attach the `@socket.io/redis-adapter`. When pod A emits a `family:task_updated` event, Redis Pub/Sub distributes the message to pods B and C so connected family members receive the broadcast regardless of which server instance they are connected to.
+3. **Idempotency Caching**: Idempotency keys would be stored in Redis using atomic `SET NX EX` commands, removing TTL deletion load from MongoDB.
+
+---
+
+### Q14: How does distributed cron locking work across multi-replica container instances?
+**Answer**:
+When deploying 5 replicas of the SaathCare backend behind an AWS ALB or Kubernetes Ingress, standard `node-cron` timers would fire 5 times simultaneously on every pod, sending 5 duplicate emails and running 5 parallel sweeps.
+In SaathCare:
+1. Each server instance initializes with a unique `instanceId` (hostname + PID + random UUID).
+2. Before any scheduled job executes, the worker invokes `DistributedLock.acquire(lockKey, ttlMs)`.
+3. The method uses an atomic MongoDB query:
+   ```javascript
+   await DistributedLock.findOneAndUpdate(
+     { key, $or: [{ expiresAt: { $lt: now } }, { lockedBy: instanceId }] },
+     { $set: { lockedBy: instanceId, lockedAt: now, expiresAt: now + ttlMs } },
+     { upsert: true, new: true }
+   );
+   ```
+4. If another pod holds an unexpired lease, the query returns null, and the current pod skips execution cleanly without conflict.
+5. In addition, an in-memory lock flag prevents task execution overlap within the same process.
+
+---
+
+### Q15: Why hash verification and password reset tokens in the database instead of storing raw tokens?
+**Answer**:
+If an attacker gains unauthorized read access to the database (via SQL/NoSQL injection, backup exposure, or internal credential leakage), plaintext tokens would allow them to reset passwords and verify accounts immediately.
+In SaathCare:
+1. When generating a token (e.g., for password reset or email verification), we generate high-entropy random bytes using `crypto.randomBytes(32).toString('hex')`.
+2. The **raw unhashed token** is sent solely to the user via their private email address.
+3. The **SHA-256 hash** of that token (`crypto.createHash('sha256').update(rawToken).digest('hex')`) is stored in the database with an expiration timestamp.
+4. When the user submits the reset form, the incoming token is hashed on the fly and compared to the database record.
+5. Because SHA-256 is a one-way cryptographic hash, a compromised database reveals zero usable reset tokens.
+
+---
+
+### Q16: How do you reconcile GDPR/DPDP "Right to Erasure" with an immutable financial ledger?
+**Answer**:
+Under GDPR Article 17 and India's DPDP Act, users have the right to delete their personal data. However, in shared financial applications, physically deleting ledger entries or user IDs breaks the accounting invariant:
+$$\sum \text{debits} \equiv \sum \text{credits}$$
+Surviving family members would find their debts altered, and audits would show unbalanceable books.
+**SaathCare's Resolution**:
+1. **3-Day Deletion Window**: Account deletion flags `pendingDeletion: true` with a 3-day grace period, allowing accidental or coerced deletions to be cancelled.
+2. **Permanent Anonymization**: When the deletion job runs:
+   - All Personally Identifiable Information (PII) is permanently scrambled: `name = "Former Member"`, `email = "former_member_{userId}@deleted.saathcare.internal"`.
+   - Passwords, refresh tokens, push tokens, and phone numbers are completely purged.
+   - The user is removed from all active family memberships.
+3. **Ledger Preservation**: Financial ledger records created by or involving the user remain intact with the original `ObjectId`. Ledger balances, settlement calculations, and transaction histories remain mathematically valid and immutable while ensuring the user's real identity is completely erased.
+
+---
+
+### Q17: How are receipt attachments securely stored and served using S3 signed URLs without exposing private buckets?
+**Answer**:
+Storing user medical receipts and pharmacy bills in a public S3 bucket or unauthenticated directory is a major HIPAA/GDPR privacy violation.
+In SaathCare:
+1. **Strict Upload Quarantine**: Multer enforces memory/temporary staging with a strict 5MB limit and MIME whitelist (`image/jpeg`, `image/png`, `image/webp`, `application/pdf`).
+2. **Private Storage**: In production, files are uploaded to an AWS S3 bucket with **Public Access Blocked** and server-side encryption (`AES256`).
+3. **Time-Limited Signed URLs**: When a family member requests an expense receipt, the backend verifies their family group membership and generates an S3 pre-signed GET URL via AWS SDK (`getSignedUrlPromise`) valid for only 15 minutes.
+4. **Local Fallback**: In local development, the `LocalStorageProvider` serves files through an authenticated Express endpoint verifying family credentials, ensuring identical security semantics in all environments.
+
+---
+
+### Q18: What is the architectural difference between Kubernetes Liveness (`/health`) and Readiness (`/ready`) probes?
+**Answer**:
+In container orchestrators like Kubernetes or Docker Swarm:
+- **Liveness Probe (`/health`)**: Answers *"Is the Node.js process alive and responsive?"* It checks only the HTTP server and event loop responsiveness. If this endpoint fails or hangs, the orchestrator terminates the container and restarts it. You should **never** check database connectivity in a liveness probe; if the database experiences a momentary failover, all server pods would simultaneously fail their liveness check and restart in a catastrophic cascading crash-loop.
+- **Readiness Probe (`/ready`)**: Answers *"Is this container ready to accept external user traffic?"* It evaluates database connectivity (`mongoose.connection.readyState === 1`). If the database is disconnecting or reconnecting, `/ready` returns `503 Service Unavailable`. The load balancer stops routing traffic to that pod while keeping the container running until the database reconnects.
+
+---
+
+### Q19: Why are refresh tokens stored in `httpOnly`, `SameSite=lax` cookies instead of localStorage?
+**Answer**:
+Storing authentication tokens in `localStorage` leaves them completely vulnerable to **Cross-Site Scripting (XSS)**. Any malicious third-party script, compromised CDN dependency, or injection flaw can execute `localStorage.getItem('token')` and exfiltrate the credentials.
+In SaathCare:
+1. Refresh tokens are stored in an **`httpOnly` cookie**, which makes it strictly inaccessible to JavaScript via the DOM (`document.cookie` cannot read it).
+2. The cookie is configured with `SameSite=lax` (or `strict` in production) and `Secure=true`, which protects against **Cross-Site Request Forgery (CSRF)** by ensuring the cookie is not attached to cross-origin subresource requests.
+3. Access tokens remain short-lived (15 minutes), minimizing the blast radius if an in-memory access token were ever intercepted.
+
+---
+
+### Q20: How does the Service Worker and PWA architecture ensure offline resilience on erratic mobile networks?
+**Answer**:
+Elder caregivers often coordinate tasks and check medicines in hospitals, transit, or basements where connectivity is intermittent.
+In SaathCare:
+1. **Web App Manifest**: Provides native app installation prompts, app icons, and standalone display mode on Android and iOS.
+2. **Service Worker Caching**: The service worker implements a **Cache-First** strategy for core static assets (HTML, CSS, JS bundles, fonts) and a **Network-First with fallback** strategy for API responses.
+3. **Offline Indicators**: The client listens to `window.addEventListener('online')` and `'offline'`, rendering a clear amber banner informing the user when connection is lost.
+4. **Reconnect Synchronization**: Upon receiving the `online` event, the application automatically refetches stale active views (tasks, expenses, member balances) to ensure local state reflects any changes made by other family members while offline.
+
+---
+
+### Q21: What is your error taxonomy and how do Correlation IDs (`X-Request-Id`) enable distributed tracing?
+**Answer**:
+1. **Correlation IDs**: The `requestIdMiddleware` inspects every incoming HTTP request for an `X-Request-Id` header. If absent, it generates a fresh UUID. This ID is passed to the response headers, attached to all structured log statements, and included in error payloads. When a user reports an issue, support engineers can search log aggregators (e.g. Datadog, CloudWatch) for that single ID and inspect the complete chronological request lifecycle.
+2. **Error Taxonomy**: We built an object-oriented error hierarchy inheriting from `ApiError`:
+   - `NotFoundError` ($404$)
+   - `ValidationError` ($400$, with field-level constraint metadata)
+   - `UnauthorizedError` ($401$, authentication failures)
+   - `ForbiddenError` ($403$, authorization & boundary violations)
+   - `ConflictError` ($409$, concurrency and idempotency collisions)
+3. The centralized `errorHandlerMiddleware` catches all exceptions, suppresses internal stack traces in production, and emits a consistent envelope: `{ success: false, error: { message, code, requestId } }`.
+
+---
+
+### Q22: How does the frontend handle mobile reliability and offline-to-online reconnection synchronization?
+**Answer**:
+Mobile ergonomics and reliability are critical for elderly family care:
+1. **Touch Ergonomics**: All interactive elements (buttons, inputs, bottom navigation tabs, modal actions) enforce a minimum touch target size of $44 \times 44\text{px}$ adhering to WCAG 2.1 AAA touch guidelines.
+2. **Double-Submit Prevention**: All modal confirmation actions (e.g. adding an expense, completing a task, inviting a member) use optimistic button disabling and loading indicators, preventing duplicate requests while network latency is high.
+3. **Client-Side Error Boundaries**: React `ErrorBoundary` wraps major routes, catching component render faults gracefully with a recovery button instead of crashing into a blank white screen.
+4. **Event-Driven Resync**: The client registers window `online` listeners that trigger immediate silent REST refetches of current tasks and expenses, merging updated server truth as soon as network returns.

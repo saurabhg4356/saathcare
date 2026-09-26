@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { Navbar } from './Navbar.jsx';
+import { SecurityBanners } from '../common/SecurityBanners.jsx';
 import { useFamily } from '../../context/FamilyContext.jsx';
 import { LayoutDashboard, CheckSquare, Receipt, Scale, Users, PlusCircle } from 'lucide-react';
 import { CreateGroupModal } from '../modals/CreateGroupModal.jsx';
@@ -19,6 +20,7 @@ export function AppLayout() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <SecurityBanners />
       <Navbar />
 
       {/* Sub-navigation bar */}

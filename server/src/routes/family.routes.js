@@ -4,6 +4,7 @@ import { authenticateUser } from '../middleware/auth.middleware.js';
 import { familyMembershipMiddleware } from '../middleware/family.middleware.js';
 import { validate } from '../middleware/validation.middleware.js';
 import { createFamilyGroupSchema, createInviteSchema } from '../validators/family.validators.js';
+import { idempotency } from '../middleware/idempotency.middleware.js';
 
 const router = Router();
 
@@ -21,6 +22,7 @@ router.post(
   '/:familyGroupId/invites',
   authenticateUser,
   familyMembershipMiddleware,
+  idempotency({ required: false }),
   validate(createInviteSchema),
   FamilyController.createInvite
 );

@@ -40,8 +40,18 @@ async function gracefulShutdown(signal) {
   logger.info(`Received ${signal}. Shutting down gracefully...`);
   stopScheduledJobs();
 
+  try {
+    if (io) {
+      logger.info('Disconnecting active WebSocket clients...');
+      io.disconnectSockets(true);
+      await new Promise((res) => io.close(res));
+    }
+  } catch (ioErr) {
+    logger.warn('Error during Socket.io close', ioErr);
+  }
+
   server.close(async () => {
-    logger.info('HTTP & Socket server closed');
+    logger.info('HTTP server closed');
     await disconnectDatabase();
     process.exit(0);
   });

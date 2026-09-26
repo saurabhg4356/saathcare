@@ -2,6 +2,9 @@ import { Task } from '../models/Task.js';
 import { FamilyGroup } from '../models/FamilyGroup.js';
 import { TASK_STATUS } from '../constants/taskStatus.js';
 import { ApiError } from '../utils/apiError.js';
+import { NotificationService } from './notification.service.js';
+import { NOTIFICATION_TYPE } from '../models/NotificationOutbox.js';
+import { EmailService } from './email/index.js';
 
 export class TaskService {
   /**
@@ -30,9 +33,35 @@ export class TaskService {
 
     await task.save();
 
-    return Task.findById(task._id)
+    const populatedTask = await Task.findById(task._id)
       .populate('assigneeId', 'name email')
       .populate('createdBy', 'name email');
+
+    // Asynchronously queue notification to assignee via Outbox
+    try {
+      if (populatedTask.assigneeId?.email) {
+        const family = await FamilyGroup.findById(familyGroupId);
+        const dueFormatted = new Date(populatedTask.dueAt).toLocaleString();
+        const template = EmailService.getTaskAssignedTemplate({
+          taskTitle: populatedTask.title,
+          dueAtFormatted: dueFormatted,
+          careRecipientName: family?.careRecipient?.name || 'Care Recipient',
+          groupName: family?.name || 'Care Group'
+        });
+
+        await NotificationService.enqueue({
+          type: NOTIFICATION_TYPE.TASK_ASSIGNED,
+          recipient: populatedTask.assigneeId.email,
+          familyGroupId,
+          userId: populatedTask.assigneeId._id,
+          payload: template
+        });
+      }
+    } catch (notifErr) {
+      // Non-blocking
+    }
+
+    return populatedTask;
   }
 
   /**

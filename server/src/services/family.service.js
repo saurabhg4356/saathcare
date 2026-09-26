@@ -5,6 +5,9 @@ import { INVITE_STATUS } from '../constants/inviteStatus.js';
 import { ApiError } from '../utils/apiError.js';
 import { generateSecureToken } from '../utils/crypto.js';
 import { EmailService } from './email.service.js';
+import { NotificationService } from './notification.service.js';
+import { NOTIFICATION_TYPE } from '../models/NotificationOutbox.js';
+import { env } from '../config/env.js';
 
 export class FamilyService {
   /**
@@ -72,12 +75,18 @@ export class FamilyService {
     });
 
     if (existingInvite) {
-      // Re-send / return existing valid invite
-      await EmailService.sendFamilyInvite({
-        toEmail: email,
+      // Re-send / queue existing valid invite
+      const inviteUrl = `${env.CLIENT_URL}/accept-invite/${existingInvite.token}`;
+      const template = EmailService.getFamilyInviteTemplate({
         inviterName: inviterUser.name,
         careRecipientName: group.careRecipientName,
-        inviteToken: existingInvite.token
+        inviteUrl
+      });
+      await NotificationService.enqueue({
+        type: NOTIFICATION_TYPE.FAMILY_INVITE,
+        recipient: email,
+        familyGroupId,
+        payload: template
       });
       return existingInvite;
     }
@@ -97,11 +106,18 @@ export class FamilyService {
 
     await invite.save();
 
-    await EmailService.sendFamilyInvite({
-      toEmail: email,
+    // Queue notification via Outbox (non-blocking)
+    const inviteUrl = `${env.CLIENT_URL}/accept-invite/${token}`;
+    const template = EmailService.getFamilyInviteTemplate({
       inviterName: inviterUser.name,
       careRecipientName: group.careRecipientName,
-      inviteToken: token
+      inviteUrl
+    });
+    await NotificationService.enqueue({
+      type: NOTIFICATION_TYPE.FAMILY_INVITE,
+      recipient: email,
+      familyGroupId,
+      payload: template
     });
 
     return invite;

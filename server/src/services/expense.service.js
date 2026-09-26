@@ -3,13 +3,14 @@ import { FamilyGroup } from '../models/FamilyGroup.js';
 import { SPLIT_TYPE } from '../constants/splitType.js';
 import { ApiError } from '../utils/apiError.js';
 import { SettleUpService } from './settleUp.service.js';
+import { StorageService } from './storage/index.js';
+import { NotificationService } from './notification.service.js';
+import { NOTIFICATION_TYPE } from '../models/NotificationOutbox.js';
+import { EmailService } from './email/index.js';
 
 export class ExpenseService {
   /**
    * Distributes total paise equally among participant IDs, distributing remainder paise evenly
-   * @param {number} totalAmountPaise 
-   * @param {Array<string>} participantIds 
-   * @returns {Array<{ userId: string, amountPaise: number }>}
    */
   static calculateEqualSplit(totalAmountPaise, participantIds) {
     const n = participantIds.length;
@@ -20,13 +21,12 @@ export class ExpenseService {
 
     return participantIds.map((userId, index) => ({
       userId,
-      // Distribute 1 extra paise to first `remainder` participants to ensure exact sum match
       amountPaise: baseAmount + (index < remainder ? 1 : 0)
     }));
   }
 
   /**
-   * Appends an immutable expense entry to the ledger
+   * Appends an immutable expense entry to the ledger with optional attachment metadata
    */
   static async recordExpense(familyGroupId, creatorUserId, {
     amountPaise,
@@ -34,19 +34,19 @@ export class ExpenseService {
     category,
     splitType = SPLIT_TYPE.EQUAL,
     participantIds = [],
-    customSplits = []
+    customSplits = [],
+    attachment = null
   }) {
-    const group = await FamilyGroup.findById(familyGroupId);
+    const group = await FamilyGroup.findById(familyGroupId).populate('members', 'name email');
     if (!group) {
       throw ApiError.notFound('Family group not found');
     }
 
-    const memberIdStrings = group.members.map(m => m.toString());
+    const memberIdStrings = group.members.map(m => m._id.toString());
 
     let finalSplit = [];
 
     if (splitType === SPLIT_TYPE.EQUAL) {
-      // Validate all participant IDs belong to the family
       for (const pId of participantIds) {
         if (!memberIdStrings.includes(pId.toString())) {
           throw ApiError.badRequest(`Participant ${pId} is not a member of this family group`);
@@ -54,7 +54,6 @@ export class ExpenseService {
       }
       finalSplit = this.calculateEqualSplit(amountPaise, participantIds);
     } else {
-      // Custom split validation
       for (const split of customSplits) {
         if (!memberIdStrings.includes(split.userId.toString())) {
           throw ApiError.badRequest(`Participant ${split.userId} is not a member of this family group`);
@@ -71,16 +70,81 @@ export class ExpenseService {
       category,
       splitType,
       splitAmong: finalSplit,
+      attachment: attachment ? {
+        url: attachment.url,
+        key: attachment.key,
+        contentType: attachment.contentType,
+        originalName: attachment.originalName,
+        sizeBytes: attachment.sizeBytes
+      } : null,
       isReversal: false,
       createdBy: creatorUserId
     });
 
     await entry.save();
 
-    return ExpenseLedger.findById(entry._id)
+    const savedEntry = await ExpenseLedger.findById(entry._id)
       .populate('paidById', 'name email')
       .populate('splitAmong.userId', 'name email')
       .populate('createdBy', 'name email');
+
+    // Asynchronously queue notification to family members (except creator) via Outbox
+    try {
+      const payerName = savedEntry.paidById?.name || 'A family member';
+      const amountRupees = `₹${(amountPaise / 100).toFixed(2)}`;
+      const template = EmailService.getExpenseAddedTemplate({
+        payerName,
+        amountFormatted: amountRupees,
+        description,
+        groupName: group.name
+      });
+
+      for (const member of group.members) {
+        if (member._id.toString() !== creatorUserId.toString() && member.email) {
+          await NotificationService.enqueue({
+            type: NOTIFICATION_TYPE.EXPENSE_ADDED,
+            recipient: member.email,
+            familyGroupId: group._id,
+            userId: member._id,
+            payload: template
+          });
+        }
+      }
+    } catch (notifErr) {
+      // Non-blocking rule: Notification error does not fail the primary ledger record
+    }
+
+    return savedEntry;
+  }
+
+  /**
+   * Uploads receipt file to configured storage provider
+   */
+  static async uploadReceipt(file) {
+    if (!file) {
+      throw ApiError.badRequest('No receipt file provided');
+    }
+    return StorageService.upload(file);
+  }
+
+  /**
+   * Generates a secure, temporary access URL for an expense receipt
+   */
+  static async getReceiptUrl(familyGroupId, expenseId, requestingUserId) {
+    const expense = await ExpenseLedger.findOne({ _id: expenseId, familyGroupId });
+    if (!expense) {
+      throw ApiError.notFound('Expense record not found');
+    }
+
+    if (!expense.attachment || !expense.attachment.key) {
+      throw ApiError.notFound('No receipt attached to this expense');
+    }
+
+    const signedUrl = await StorageService.getSignedUrl(expense.attachment.key);
+    return {
+      signedUrl,
+      attachment: expense.attachment
+    };
   }
 
   /**
@@ -96,7 +160,6 @@ export class ExpenseService {
       throw ApiError.badRequest('Cannot reverse an entry that is already a reversal');
     }
 
-    // Check if previously reversed
     const existingReversal = await ExpenseLedger.findOne({
       familyGroupId,
       originalEntryId: expenseId,
@@ -172,7 +235,6 @@ export class ExpenseService {
       throw ApiError.notFound('Family group not found');
     }
 
-    // Build directory of member user objects
     const userDirectory = new Map();
     for (const member of group.members) {
       userDirectory.set(member._id.toString(), {

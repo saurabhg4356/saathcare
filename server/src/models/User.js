@@ -25,6 +25,34 @@ const userSchema = new mongoose.Schema(
     refreshTokenHash: {
       type: String,
       default: null
+    },
+    isVerified: {
+      type: Boolean,
+      default: false
+    },
+    verificationTokenHash: {
+      type: String,
+      default: null
+    },
+    verificationTokenExpiresAt: {
+      type: Date,
+      default: null
+    },
+    passwordResetTokenHash: {
+      type: String,
+      default: null
+    },
+    passwordResetExpiresAt: {
+      type: Date,
+      default: null
+    },
+    pendingDeletion: {
+      type: Boolean,
+      default: false
+    },
+    deletionScheduledAt: {
+      type: Date,
+      default: null
     }
   },
   {
@@ -33,6 +61,8 @@ const userSchema = new mongoose.Schema(
       transform: (doc, ret) => {
         delete ret.password;
         delete ret.refreshTokenHash;
+        delete ret.verificationTokenHash;
+        delete ret.passwordResetTokenHash;
         delete ret.__v;
         return ret;
       }

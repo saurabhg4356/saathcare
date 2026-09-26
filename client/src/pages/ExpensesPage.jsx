@@ -4,7 +4,7 @@ import { useSocket } from '../context/SocketContext.jsx';
 import { expenseService } from '../services/expenseService.js';
 import { formatPaiseToINR } from '../utils/currency.js';
 import { formatDateTime } from '../utils/date.js';
-import { Receipt, Plus, RotateCcw, AlertTriangle, ShieldCheck, ChevronDown } from 'lucide-react';
+import { Receipt, Plus, RotateCcw, AlertTriangle, ShieldCheck, ChevronDown, FileText } from 'lucide-react';
 import { AddExpenseModal } from '../components/modals/AddExpenseModal.jsx';
 import { ReverseExpenseModal } from '../components/modals/ReverseExpenseModal.jsx';
 
@@ -33,6 +33,13 @@ export function ExpensesPage() {
 
   useEffect(() => {
     fetchExpenses();
+
+    // REST refetch on network reconnect
+    const handleOnline = () => {
+      fetchExpenses();
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
   }, [fetchExpenses]);
 
   // Real-Time Socket.io sync
@@ -41,13 +48,25 @@ export function ExpensesPage() {
 
     const unsubs = [
       subscribe('expense:added', () => fetchExpenses()),
-      subscribe('expense:reversed', () => fetchExpenses())
+      subscribe('expense:reversed', () => fetchExpenses()),
+      subscribe('connect', () => fetchExpenses())
     ];
 
     return () => {
       unsubs.forEach(unsub => unsub?.());
     };
   }, [activeGroup?._id, subscribe, fetchExpenses]);
+
+  const handleViewReceipt = async (expenseId) => {
+    try {
+      const res = await expenseService.getReceiptUrl(activeGroup._id, expenseId);
+      if (res?.data?.signedUrl) {
+        window.open(res.data.signedUrl, '_blank', 'noopener,noreferrer');
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to retrieve receipt URL');
+    }
+  };
 
   const activeEntries = expenses.filter(e => !e.isReversal);
   const reversedEntries = expenses.filter(e => e.isReversal);
@@ -164,6 +183,29 @@ export function ExpensesPage() {
                       {entry.reversalReason && (
                         <div style={{ fontSize: '0.75rem', color: 'var(--accent-rose)', marginTop: '0.2rem' }}>
                           Reason: {entry.reversalReason}
+                        </div>
+                      )}
+                      {entry.attachment?.key && (
+                        <div style={{ marginTop: '0.35rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleViewReceipt(entry._id)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--accent-cyan)',
+                              fontSize: '0.75rem',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              padding: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <FileText size={12} />
+                            View Attached Receipt
+                          </button>
                         </div>
                       )}
                     </td>

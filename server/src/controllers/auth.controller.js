@@ -3,10 +3,11 @@ import { ApiResponse } from '../utils/apiResponse.js';
 import { env } from '../config/env.js';
 
 function setRefreshCookie(res, refreshToken) {
+  const isProduction = env.NODE_ENV === 'production';
   const cookieOptions = {
     httpOnly: true,
-    secure: env.COOKIE.SECURE,
-    sameSite: env.COOKIE.SAME_SITE,
+    secure: isProduction || env.COOKIE.SECURE,
+    sameSite: isProduction ? 'none' : (env.COOKIE.SAME_SITE || 'lax'),
     maxAge: env.JWT.REFRESH_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
     path: '/'
   };
@@ -24,7 +25,7 @@ export class AuthController {
       return res.status(201).json(
         ApiResponse.success(
           { user: result.user, accessToken: result.accessToken },
-          'Account registered successfully'
+          'Account registered successfully. A verification email has been dispatched.'
         )
       );
     } catch (error) {
@@ -81,6 +82,80 @@ export class AuthController {
       const user = await AuthService.getCurrentUser(req.user._id);
       return res.status(200).json(
         ApiResponse.success(user, 'User profile retrieved')
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async verifyEmail(req, res, next) {
+    try {
+      const { token } = req.params;
+      const result = await AuthService.verifyEmail(token);
+      return res.status(200).json(
+        ApiResponse.success(result, 'Email verified successfully')
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async resendVerification(req, res, next) {
+    try {
+      const { email } = req.body;
+      const result = await AuthService.resendVerification(email);
+      return res.status(200).json(
+        ApiResponse.success(null, result.message)
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async forgotPassword(req, res, next) {
+    try {
+      const { email } = req.body;
+      const result = await AuthService.forgotPassword(email);
+      return res.status(200).json(
+        ApiResponse.success(null, result.message)
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async resetPassword(req, res, next) {
+    try {
+      const { token } = req.params;
+      const { password } = req.body;
+      const result = await AuthService.resetPassword(token, password);
+      // Clear any session cookie since old sessions are invalidated
+      res.clearCookie('refreshToken', { path: '/' });
+      return res.status(200).json(
+        ApiResponse.success(null, result.message)
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async requestDeletion(req, res, next) {
+    try {
+      const result = await AuthService.requestAccountDeletion(req.user._id);
+      res.clearCookie('refreshToken', { path: '/' });
+      return res.status(200).json(
+        ApiResponse.success({ deletionScheduledAt: result.deletionScheduledAt }, result.message)
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async cancelDeletion(req, res, next) {
+    try {
+      const result = await AuthService.cancelAccountDeletion(req.user._id);
+      return res.status(200).json(
+        ApiResponse.success(null, result.message)
       );
     } catch (error) {
       next(error);

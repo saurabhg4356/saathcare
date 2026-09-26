@@ -1,6 +1,9 @@
 import { ExpenseService } from '../services/expense.service.js';
 import { ApiResponse } from '../utils/apiResponse.js';
 import { SocketEmitter } from '../sockets/socketEmitter.js';
+import { StorageService } from '../services/storage/index.js';
+import { ApiError } from '../utils/apiError.js';
+import fs from 'fs';
 
 export class ExpenseController {
   static async addExpense(req, res, next) {
@@ -17,6 +20,48 @@ export class ExpenseController {
       return res.status(201).json(
         ApiResponse.success(entry, 'Expense logged in ledger successfully')
       );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async uploadReceipt(req, res, next) {
+    try {
+      if (!req.file) {
+        return next(ApiError.badRequest('No file uploaded or file rejected by validator'));
+      }
+
+      const result = await ExpenseService.uploadReceipt(req.file);
+      return res.status(200).json(
+        ApiResponse.success(result, 'Receipt uploaded successfully')
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getReceiptUrl(req, res, next) {
+    try {
+      const result = await ExpenseService.getReceiptUrl(
+        req.params.familyGroupId,
+        req.params.expenseId,
+        req.user._id
+      );
+      return res.status(200).json(
+        ApiResponse.success(result, 'Receipt signed URL generated')
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async streamReceipt(req, res, next) {
+    try {
+      const filePath = StorageService.getLocalFilePath(req.params.key);
+      if (!filePath || !fs.existsSync(filePath)) {
+        return next(ApiError.notFound('Receipt file not found'));
+      }
+      return res.sendFile(filePath);
     } catch (error) {
       next(error);
     }

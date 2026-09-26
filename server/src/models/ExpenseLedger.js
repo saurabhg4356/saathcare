@@ -78,6 +78,13 @@ const expenseLedgerSchema = new mongoose.Schema(
       default: null,
       maxlength: [250, 'Reversal reason cannot exceed 250 characters']
     },
+    attachment: {
+      url: { type: String, default: null },
+      key: { type: String, default: null },
+      contentType: { type: String, default: null },
+      originalName: { type: String, default: null },
+      sizeBytes: { type: Number, default: null }
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

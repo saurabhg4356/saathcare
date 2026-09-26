@@ -41,6 +41,11 @@ services:
       - COOKIE_SAME_SITE=lax
       - MISSED_TASK_CRON_SCHEDULE=*/5 * * * *
       - MISSED_TASK_JOB_ENABLED=true
+      - EMAIL_PROVIDER=mock
+      - STORAGE_PROVIDER=local
+      - LOCAL_STORAGE_PATH=uploads
+    volumes:
+      - receipts_data:/app/uploads
     depends_on:
       mongodb:
         condition: service_healthy
@@ -62,6 +67,8 @@ services:
 
 volumes:
   mongo_data:
+    driver: local
+  receipts_data:
     driver: local
 
 networks:

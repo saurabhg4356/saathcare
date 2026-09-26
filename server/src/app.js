@@ -6,10 +6,17 @@ import { env } from './config/env.js';
 import { generalLimiter } from './middleware/rateLimit.middleware.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { ApiError } from './utils/apiError.js';
+import { requestIdMiddleware } from './middleware/requestId.middleware.js';
+import { requestLogger } from './middleware/requestLogger.middleware.js';
 import healthRoutes from './routes/health.routes.js';
 import masterRoutes from './routes/index.js';
+import { getLiveness, getReadiness } from './controllers/health.controller.js';
 
 const app = express();
+
+// Request correlation tracking and structured logging
+app.use(requestIdMiddleware);
+app.use(requestLogger);
 
 // Security HTTP headers
 app.use(helmet());
@@ -34,7 +41,7 @@ app.use(
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Idempotency-Key', 'X-Request-Id']
   })
 );
 
@@ -46,7 +53,11 @@ app.use(cookieParser());
 // Rate Limiting (Applied globally, with stricter limiter on auth routes)
 app.use('/api', generalLimiter);
 
-// Liveness check at root /health as required
+// Top-level liveness & readiness probes
+app.get('/health', getLiveness);
+app.get('/ready', getReadiness);
+
+// Health routes under /health as well
 app.use('/health', healthRoutes);
 
 // Master API Routes under /api

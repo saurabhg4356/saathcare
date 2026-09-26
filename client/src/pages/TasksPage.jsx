@@ -6,6 +6,7 @@ import { formatDateTime, getRelativeDueLabel } from '../utils/date.js';
 import { TASK_STATUS } from '../utils/constants.js';
 import { CheckSquare, Plus, CheckCircle2, AlertCircle, Clock, Filter, User } from 'lucide-react';
 import { CreateTaskModal } from '../components/modals/CreateTaskModal.jsx';
+import { generateUUID } from '../utils/uuid.js';
 
 export function TasksPage() {
   const { activeGroup } = useFamily();
@@ -33,18 +34,28 @@ export function TasksPage() {
     }
   }, [activeGroup?._id, statusFilter, assigneeFilter]);
 
+  const [completingId, setCompletingId] = useState(null);
+
   useEffect(() => {
     fetchTasks();
+
+    // Refetch on network reconnect
+    const handleOnline = () => {
+      fetchTasks();
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
   }, [fetchTasks]);
 
-  // Real-time socket event updates
+  // Real-time socket event updates & reconnect sync
   useEffect(() => {
     if (!activeGroup?._id) return;
 
     const unsubs = [
       subscribe('task:created', () => fetchTasks()),
       subscribe('task:completed', () => fetchTasks()),
-      subscribe('task:missed', () => fetchTasks())
+      subscribe('task:missed', () => fetchTasks()),
+      subscribe('connect', () => fetchTasks())
     ];
 
     return () => {
@@ -53,11 +64,15 @@ export function TasksPage() {
   }, [activeGroup?._id, subscribe, fetchTasks]);
 
   const handleComplete = async (taskId) => {
+    setCompletingId(taskId);
     try {
-      await taskService.completeTask(activeGroup._id, taskId);
+      const idempotencyKey = generateUUID();
+      await taskService.completeTask(activeGroup._id, taskId, idempotencyKey);
       fetchTasks();
     } catch (err) {
       alert(err.message || 'Failed to complete task');
+    } finally {
+      setCompletingId(null);
     }
   };
 
@@ -212,10 +227,21 @@ export function TasksPage() {
                     <button
                       type="button"
                       className="btn btn-secondary btn-sm"
-                      style={{ width: '100%', color: 'var(--accent-emerald)', borderColor: 'rgba(16, 185, 129, 0.3)' }}
+                      style={{
+                        width: '100%',
+                        color: 'var(--accent-emerald)',
+                        borderColor: 'rgba(16, 185, 129, 0.3)',
+                        minHeight: '44px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                      disabled={completingId === task._id}
                       onClick={() => handleComplete(task._id)}
                     >
-                      <CheckCircle2 size={16} /> Mark as Completed
+                      <CheckCircle2 size={16} />
+                      {completingId === task._id ? 'Completing...' : 'Mark as Completed'}
                     </button>
                   )}
                 </div>

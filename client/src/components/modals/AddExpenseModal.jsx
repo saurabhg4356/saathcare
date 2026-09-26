@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from '../common/Modal.jsx';
 import { expenseService } from '../../services/expenseService.js';
 import { useFamily } from '../../context/FamilyContext.jsx';
 import { EXPENSE_CATEGORIES, SPLIT_TYPE } from '../../utils/constants.js';
 import { rupeesToPaise, formatPaiseToINR } from '../../utils/currency.js';
+import { generateUUID } from '../../utils/uuid.js';
+import { Upload, FileText, X, Check, Loader2 } from 'lucide-react';
 
 export function AddExpenseModal({ isOpen, onClose, onExpenseLogged }) {
   const { activeGroup } = useFamily();
@@ -20,18 +22,31 @@ export function AddExpenseModal({ isOpen, onClose, onExpenseLogged }) {
   // Custom split values: { [userId]: rupeesString }
   const [customAmounts, setCustomAmounts] = useState({});
 
+  // Receipt attachment state
+  const [receiptFile, setReceiptFile] = useState(null);
+  const [receiptError, setReceiptError] = useState('');
+
+  // Idempotency key preserved across retries for this modal session
+  const [idempotencyKey, setIdempotencyKey] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Initialize participants on open or members change
+  // Initialize participants and generate UUID idempotency key on open
   useEffect(() => {
-    if (members.length > 0) {
-      setSelectedParticipants(members.map(m => m._id));
-      const initialCustom = {};
-      members.forEach(m => {
-        initialCustom[m._id] = '';
-      });
-      setCustomAmounts(initialCustom);
+    if (isOpen) {
+      setIdempotencyKey(generateUUID());
+      setError('');
+      setReceiptError('');
+      setReceiptFile(null);
+      if (members.length > 0) {
+        setSelectedParticipants(members.map(m => m._id));
+        const initialCustom = {};
+        members.forEach(m => {
+          initialCustom[m._id] = '';
+        });
+        setCustomAmounts(initialCustom);
+      }
     }
   }, [members, isOpen]);
 
@@ -49,6 +64,32 @@ export function AddExpenseModal({ isOpen, onClose, onExpenseLogged }) {
 
   const handleCustomAmountChange = (userId, val) => {
     setCustomAmounts(prev => ({ ...prev, [userId]: val }));
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    setReceiptError('');
+    if (!file) {
+      setReceiptFile(null);
+      return;
+    }
+
+    const allowedMime = ['image/jpeg', 'image/png', 'application/pdf'];
+    const maxSizeBytes = 5 * 1024 * 1024; // 5 MB
+
+    if (!allowedMime.includes(file.type)) {
+      setReceiptError('File must be a JPEG, PNG, or PDF');
+      setReceiptFile(null);
+      return;
+    }
+
+    if (file.size > maxSizeBytes) {
+      setReceiptError('File size exceeds the 5 MB limit');
+      setReceiptFile(null);
+      return;
+    }
+
+    setReceiptFile(file);
   };
 
   // Calculate live split summaries
@@ -75,15 +116,28 @@ export function AddExpenseModal({ isOpen, onClose, onExpenseLogged }) {
       return;
     }
 
+    // Optimistic UI protection: lock button immediately
     setLoading(true);
     setError('');
 
     try {
+      let attachmentMetadata = null;
+
+      // 1. Upload receipt first if selected (preserving ledger immutability)
+      if (receiptFile) {
+        const uploadRes = await expenseService.uploadReceipt(activeGroup._id, receiptFile);
+        if (uploadRes?.data) {
+          attachmentMetadata = uploadRes.data;
+        }
+      }
+
+      // 2. Prepare immutable expense payload
       const payload = {
         amountPaise: totalPaise,
         description: description.trim(),
         category,
-        splitType
+        splitType,
+        attachment: attachmentMetadata
       };
 
       if (splitType === SPLIT_TYPE.EQUAL) {
@@ -97,13 +151,16 @@ export function AddExpenseModal({ isOpen, onClose, onExpenseLogged }) {
           .filter(s => s.amountPaise > 0);
       }
 
-      const entry = await expenseService.recordExpense(activeGroup._id, payload);
+      // 3. Post to immutable ledger with idempotency key
+      const entry = await expenseService.recordExpense(activeGroup._id, payload, idempotencyKey);
 
       setRupees('');
       setDescription('');
+      setReceiptFile(null);
       onExpenseLogged?.(entry);
       onClose();
     } catch (err) {
+      // If error occurs, the user can re-click and the same idempotency key is safely sent
       setError(err.message || 'Failed to record expense');
     } finally {
       setLoading(false);
@@ -142,101 +199,142 @@ export function AddExpenseModal({ isOpen, onClose, onExpenseLogged }) {
               value={category}
               onChange={(e) => setCategory(e.target.value)}
             >
-              {Object.entries(EXPENSE_CATEGORIES).map(([key, val]) => (
-                <option key={key} value={val}>{val}</option>
+              {Object.values(EXPENSE_CATEGORIES).map(cat => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
               ))}
             </select>
           </div>
         </div>
 
         <div className="form-group">
-          <label className="form-label">Description / Receipt Notes *</label>
+          <label className="form-label">Description / Purpose *</label>
           <input
             type="text"
             className="form-control"
-            placeholder="e.g. Apollo Pharmacy — Monthly BP & Diabetes meds"
+            placeholder="e.g. Monthly cardiac medication & doctor consult"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            maxLength={250}
             required
           />
         </div>
 
-        {/* Split Type Selector */}
-        <div style={{ margin: '1.25rem 0' }}>
-          <label className="form-label" style={{ display: 'block', marginBottom: '0.5rem' }}>
-            Split Calculation Method
-          </label>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <label style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem',
-              background: splitType === SPLIT_TYPE.EQUAL ? 'rgba(56, 189, 248, 0.1)' : 'var(--bg-tertiary)',
-              border: `1px solid ${splitType === SPLIT_TYPE.EQUAL ? 'var(--accent-cyan)' : 'var(--border-subtle)'}`,
-              borderRadius: 'var(--radius-md)',
-              cursor: 'pointer'
-            }}>
-              <input
-                type="radio"
-                name="splitType"
-                checked={splitType === SPLIT_TYPE.EQUAL}
-                onChange={() => setSplitType(SPLIT_TYPE.EQUAL)}
-              />
-              <div>
-                <div style={{ fontWeight: '600', fontSize: '0.875rem' }}>Equal Split</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Divided equally across selected members</div>
+        {/* Receipt / Bill Upload Field */}
+        <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+          <label className="form-label">Attach Receipt / Invoice (Optional)</label>
+          <div style={{
+            border: '2px dashed var(--border-subtle)',
+            borderRadius: 'var(--radius-md)',
+            padding: '1rem',
+            textAlign: 'center',
+            background: 'rgba(15, 23, 42, 0.4)'
+          }}>
+            {receiptFile ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(56, 189, 248, 0.1)', padding: '0.5rem 0.75rem', borderRadius: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <FileText size={18} color="var(--accent-cyan)" />
+                  <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>{receiptFile.name}</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    ({(receiptFile.size / 1024).toFixed(0)} KB)
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReceiptFile(null)}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
+                >
+                  <X size={16} />
+                </button>
               </div>
-            </label>
-
-            <label style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem',
-              background: splitType === SPLIT_TYPE.CUSTOM ? 'rgba(56, 189, 248, 0.1)' : 'var(--bg-tertiary)',
-              border: `1px solid ${splitType === SPLIT_TYPE.CUSTOM ? 'var(--accent-cyan)' : 'var(--border-subtle)'}`,
-              borderRadius: 'var(--radius-md)',
-              cursor: 'pointer'
-            }}>
-              <input
-                type="radio"
-                name="splitType"
-                checked={splitType === SPLIT_TYPE.CUSTOM}
-                onChange={() => setSplitType(SPLIT_TYPE.CUSTOM)}
-              />
+            ) : (
               <div>
-                <div style={{ fontWeight: '600', fontSize: '0.875rem' }}>Custom Split</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Specify exact share per family member</div>
+                <label style={{ cursor: 'pointer', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                  <Upload size={22} color="var(--accent-cyan)" />
+                  <span style={{ fontSize: '0.85rem', color: 'var(--accent-cyan)', fontWeight: '600' }}>
+                    Click to upload receipt
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Supported formats: JPEG, PNG, PDF (Max 5MB)
+                  </span>
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={handleFileChange}
+                    style={{ display: 'none' }}
+                  />
+                </label>
               </div>
-            </label>
+            )}
+            {receiptError && (
+              <div style={{ color: 'var(--accent-rose)', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+                {receiptError}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Member breakdown configuration */}
-        <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
-          <div style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '0.75rem', textTransform: 'uppercase' }}>
-            {splitType === SPLIT_TYPE.EQUAL ? 'Select Included Family Members' : 'Allocate Share Per Member'}
+        {/* Split Configuration */}
+        <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-subtle)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <label className="form-label" style={{ margin: 0 }}>Split Type</label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                type="button"
+                className={`btn btn-sm ${splitType === SPLIT_TYPE.EQUAL ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setSplitType(SPLIT_TYPE.EQUAL)}
+              >
+                Equal Split
+              </button>
+              <button
+                type="button"
+                className={`btn btn-sm ${splitType === SPLIT_TYPE.CUSTOM ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setSplitType(SPLIT_TYPE.CUSTOM)}
+              >
+                Custom Amounts
+              </button>
+            </div>
           </div>
 
           {splitType === SPLIT_TYPE.EQUAL ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+                Select family members to split among ({selectedParticipants.length} selected):
+              </div>
               {members.map(m => {
                 const isSelected = selectedParticipants.includes(m._id);
-                const sharePaise = isSelected && selectedParticipants.length > 0 ? Math.floor(totalPaise / selectedParticipants.length) : 0;
+                const sharePaise = isSelected && selectedParticipants.length > 0
+                  ? Math.floor(totalPaise / selectedParticipants.length)
+                  : 0;
+
                 return (
-                  <label key={m._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-tertiary)', cursor: 'pointer' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <label
+                    key={m._id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.6rem 0.85rem',
+                      borderRadius: 'var(--radius-md)',
+                      background: isSelected ? 'rgba(56, 189, 248, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                      border: isSelected ? '1px solid var(--accent-cyan)' : '1px solid var(--border-subtle)',
+                      cursor: 'pointer',
+                      minHeight: '44px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleParticipant(m._id)}
+                        style={{ width: '18px', height: '18px' }}
                       />
-                      <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>{m.name}</span>
+                      <span style={{ fontSize: '0.875rem', fontWeight: isSelected ? '600' : '400' }}>
+                        {m.name}
+                      </span>
                     </div>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--accent-cyan)', fontFamily: 'var(--font-mono)' }}>
+                    <span style={{ fontSize: '0.85rem', color: isSelected ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: '500' }}>
                       {isSelected ? formatPaiseToINR(sharePaise) : 'Excluded'}
                     </span>
                   </label>
@@ -274,11 +372,23 @@ export function AddExpenseModal({ isOpen, onClose, onExpenseLogged }) {
         </div>
 
         <div className="modal-footer" style={{ padding: '1.25rem 0 0 0', marginTop: '1.5rem' }}>
-          <button type="button" className="btn btn-secondary" onClick={onClose}>
+          <button type="button" className="btn btn-secondary" onClick={onClose} style={{ minHeight: '44px' }}>
             Cancel
           </button>
-          <button type="submit" className="btn btn-primary" disabled={loading || (splitType === SPLIT_TYPE.CUSTOM && remainingPaise !== 0)}>
-            {loading ? 'Recording...' : 'Append to Ledger'}
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={loading || (splitType === SPLIT_TYPE.CUSTOM && remainingPaise !== 0)}
+            style={{ minHeight: '44px', display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            {loading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Appending to Ledger...
+              </>
+            ) : (
+              'Append to Ledger'
+            )}
           </button>
         </div>
       </form>

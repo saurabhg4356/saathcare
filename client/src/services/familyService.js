@@ -16,8 +16,12 @@ export const familyService = {
     return res.data;
   },
 
-  async createInvite(familyGroupId, email) {
-    const res = await api.post(`/family-groups/${familyGroupId}/invites`, { email });
+  async createInvite(familyGroupId, email, idempotencyKey = null) {
+    const headers = {};
+    if (idempotencyKey) {
+      headers['Idempotency-Key'] = idempotencyKey;
+    }
+    const res = await api.post(`/family-groups/${familyGroupId}/invites`, { email }, { headers });
     return res.data;
   },
 

@@ -1,22 +1,21 @@
-import { logger } from '../config/logger.js';
+import { EmailService } from './email/index.js';
 import { env } from '../config/env.js';
 
-export class EmailService {
-  /**
-   * Dispatches family invitation email
-   * In development, logs the secure onboarding URL to console
-   */
+export class LegacyEmailService {
   static async sendFamilyInvite({ toEmail, inviterName, careRecipientName, inviteToken }) {
     const inviteUrl = `${env.CLIENT_URL}/accept-invite/${inviteToken}`;
+    const template = EmailService.getFamilyInviteTemplate({
+      inviterName,
+      careRecipientName,
+      inviteUrl
+    });
 
-    logger.info('------------------------------------------------------------');
-    logger.info(`[EMAIL SERVICE] INVITATION DISPATCHED`);
-    logger.info(`To: ${toEmail}`);
-    logger.info(`Subject: You have been invited to join the care team for ${careRecipientName}`);
-    logger.info(`Invited By: ${inviterName}`);
-    logger.info(`Accept URL: ${inviteUrl}`);
-    logger.info(`Valid for: 7 Days`);
-    logger.info('------------------------------------------------------------');
+    await EmailService.sendEmail({
+      to: toEmail,
+      subject: template.subject,
+      text: template.text,
+      html: template.html
+    });
 
     return {
       success: true,
@@ -25,3 +24,6 @@ export class EmailService {
     };
   }
 }
+
+export { EmailService, LegacyEmailService as EmailServiceWrapper };
+export default EmailService;

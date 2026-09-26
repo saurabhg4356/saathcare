@@ -1,5 +1,5 @@
 /**
- * Custom application operational error class with HTTP status code support
+ * Custom application operational error class hierarchy with HTTP status code support
  */
 export class ApiError extends Error {
   /**
@@ -10,7 +10,7 @@ export class ApiError extends Error {
    */
   constructor(statusCode, message, code = 'APPLICATION_ERROR', details = null) {
     super(message);
-    this.name = 'ApiError';
+    this.name = this.constructor.name;
     this.statusCode = statusCode;
     this.code = code;
     this.details = details;
@@ -20,30 +20,72 @@ export class ApiError extends Error {
   }
 
   static badRequest(message, details = null) {
-    return new ApiError(400, message, 'BAD_REQUEST', details);
+    return new BadRequestError(message, details);
   }
 
   static unauthorized(message = 'Authentication required') {
-    return new ApiError(401, message, 'UNAUTHORIZED');
+    return new UnauthorizedError(message);
   }
 
   static forbidden(message = 'Access denied to this resource') {
-    return new ApiError(403, message, 'FORBIDDEN');
+    return new ForbiddenError(message);
   }
 
   static notFound(message = 'Resource not found') {
-    return new ApiError(404, message, 'NOT_FOUND');
+    return new NotFoundError(message);
   }
 
   static conflict(message = 'Resource already exists') {
-    return new ApiError(409, message, 'CONFLICT');
+    return new ConflictError(message);
   }
 
   static unprocessable(message, details = null) {
-    return new ApiError(422, message, 'UNPROCESSABLE_ENTITY', details);
+    return new ValidationError(message, details);
   }
 
   static internal(message = 'Internal server error') {
-    return new ApiError(500, message, 'INTERNAL_SERVER_ERROR');
+    return new InternalServerError(message);
+  }
+}
+
+export class NotFoundError extends ApiError {
+  constructor(message = 'Resource not found', details = null) {
+    super(404, message, 'NOT_FOUND', details);
+  }
+}
+
+export class ValidationError extends ApiError {
+  constructor(message = 'Validation failed', details = null) {
+    super(400, message, 'VALIDATION_ERROR', details);
+  }
+}
+
+export class UnauthorizedError extends ApiError {
+  constructor(message = 'Authentication required', details = null) {
+    super(401, message, 'UNAUTHORIZED', details);
+  }
+}
+
+export class ForbiddenError extends ApiError {
+  constructor(message = 'Access denied to this resource', details = null) {
+    super(403, message, 'FORBIDDEN', details);
+  }
+}
+
+export class ConflictError extends ApiError {
+  constructor(message = 'Resource conflict or duplicate entry', details = null) {
+    super(409, message, 'CONFLICT', details);
+  }
+}
+
+export class BadRequestError extends ApiError {
+  constructor(message = 'Bad request', details = null) {
+    super(400, message, 'BAD_REQUEST', details);
+  }
+}
+
+export class InternalServerError extends ApiError {
+  constructor(message = 'Internal server error', details = null) {
+    super(500, message, 'INTERNAL_SERVER_ERROR', details);
   }
 }

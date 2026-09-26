@@ -151,6 +151,7 @@ button {
   font-size: 0.925rem;
   font-weight: 600;
   border-radius: var(--radius-md);
+  min-height: 44px; /* Touch accessibility */
   transition: all var(--transition-fast);
   text-decoration: none;
 }
