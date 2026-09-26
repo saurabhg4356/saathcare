@@ -18,6 +18,9 @@
     "test": "npm run test:server",
     "install:all": "npm install && npm --prefix server install && npm --prefix client install"
   },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "4.63.5"
+  },
   "keywords": [
     "elder-care",
     "expense-ledger",

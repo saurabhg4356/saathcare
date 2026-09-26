@@ -26,7 +26,7 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install Workspace Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Execute Vitest Test Suites
         run: npm run test:server
@@ -47,7 +47,7 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install Workspace Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build Vite Production Assets
         run: npm run build:client
