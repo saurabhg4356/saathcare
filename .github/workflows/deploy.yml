@@ -9,26 +9,24 @@ jobs:
   deploy:
     name: Trigger Production Deployment
     runs-on: ubuntu-latest
-    needs: [] # Runs after CI passes on main
+    env:
+      RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Deploy Backend to Render / Railway (Deploy Hook)
-        if: env.RENDER_DEPLOY_HOOK_URL != ''
-        env:
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        if: ${{ env.RENDER_DEPLOY_HOOK_URL != '' }}
         run: |
           echo "Triggering backend deployment webhook..."
           curl -s -X POST "$RENDER_DEPLOY_HOOK_URL"
 
       - name: Deploy Frontend to Vercel (CLI)
-        if: env.VERCEL_TOKEN != ''
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        if: ${{ env.VERCEL_TOKEN != '' }}
         run: |
           echo "Deploying client to Vercel Edge..."
           npx vercel --prod --token "$VERCEL_TOKEN"
