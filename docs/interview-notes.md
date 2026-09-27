@@ -244,3 +244,46 @@ Mobile ergonomics and reliability are critical for elderly family care:
 2. **Double-Submit Prevention**: All modal confirmation actions (e.g. adding an expense, completing a task, inviting a member) use optimistic button disabling and loading indicators, preventing duplicate requests while network latency is high.
 3. **Client-Side Error Boundaries**: React `ErrorBoundary` wraps major routes, catching component render faults gracefully with a recovery button instead of crashing into a blank white screen.
 4. **Event-Driven Resync**: The client registers window `online` listeners that trigger immediate silent REST refetches of current tasks and expenses, merging updated server truth as soon as network returns.
+
+---
+
+### Q23: Why decouple email delivery using the Notification Outbox pattern instead of sending emails inline in HTTP handlers?
+**Answer**:
+Sending emails directly within Express route handlers (e.g. calling `nodemailer.sendMail` inside `POST /invites` or `POST /register`) creates two major production vulnerabilities:
+1. **HTTP Latency & Tail Times**: Connecting to external SMTP relays or third-party email APIs takes between 500ms to 5000ms. Making users wait for an email handshake slows down the perceived responsiveness of the app.
+2. **The Dual-Write Problem**: If the database write succeeds but the third-party SMTP server returns an error or times out, what do you do? If you fail the HTTP request, you leave an orphaned database record. If you succeed the HTTP request, the user never receives their critical invitation or verification link.
+
+**The Outbox Solution**:
+In SaathCare, mutating actions save their primary entity and simultaneously insert a `PENDING` record into the `NotificationOutbox` collection. A background worker (`notificationOutbox.job.js`) polls records every 10 seconds, dispatches them via the active `EmailProvider`, and applies exponential backoff ($2^{\text{attempts}} \times 10\text{s}$, max 3600s) on transient network failures.
+
+---
+
+### Q24: How does the Financial Idempotency middleware prevent duplicate billing during network timeouts?
+**Answer**:
+When a sibling logs a ₹15,000 hospital deposit on an unstable cellular connection, the request might reach the backend, successfully write to the database, but time out before the HTTP response reaches the mobile browser. If the user clicks "Submit" again:
+1. Without idempotency, a second duplicate ₹15,000 expense is created, corrupting ledger balances.
+2. In SaathCare, the client generates a unique UUID `X-Idempotency-Key` for mutating requests.
+3. `idempotencyMiddleware` attempts to atomically reserve the key in the `IdempotencyKey` collection:
+   ```javascript
+   await IdempotencyKey.create({ key, userId, status: 'PENDING', expiresAt });
+   ```
+4. If a concurrent duplicate request arrives, the unique index violation responds with `409 Conflict`.
+5. Once the request succeeds, the response body and status code are cached. When the retried request arrives, the middleware recognizes the key and replays the cached response immediately with an `X-Cache: HIT` header. Keys expire automatically after 24 hours via MongoDB TTL indexes.
+
+---
+
+### Q25: How do you balance GDPR / DPDP "Right to be Forgotten" with immutable financial ledger auditing?
+**Answer**:
+This is a classic compliance vs financial integrity trade-off:
+- **GDPR / DPDP Regulation**: Users have the right to request the permanent deletion of their personal identifiable information (PII).
+- **Financial Audit Invariant**: If you hard-delete a user who paid for medical bills, you create orphaned records in `ExpenseLedger`, break the mathematical debt-minimization matrices, and destroy the historical audit trail for surviving siblings.
+
+**The Solution**:
+1. **3-Day Grace Period**: When a user requests account deletion, a 3-day countdown is initiated (`deletionScheduledAt = NOW + 3 days`). The user can log in and cancel the request at any time during this window.
+2. **Anonymization Sweeper (`accountDeletion.job.js`)**: Once the grace period expires, the worker scrubs all PII:
+   - Name is permanently updated to `"Former Member"`.
+   - Email is rewritten to `former_member_{userId}@deleted.saathcare.internal`.
+   - Passwords, refresh tokens, active sessions, and unread notifications are wiped.
+   - The user is removed from family group member rosters.
+   - **Expense ledger documents are preserved unmodified**, maintaining accurate historical totals, paise balance calculations, and transparency for the remaining family members.
+

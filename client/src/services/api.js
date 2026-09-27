@@ -13,8 +13,12 @@ export const setStoredAccessToken = (token) => {
 
 export const getStoredAccessToken = () => accessToken;
 
+const apiBaseUrl = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL.replace(/\/+$/, '')}/api`
+  : '/api';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: apiBaseUrl,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
@@ -78,7 +82,7 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshRes = await axios.post('/api/auth/refresh', {}, { withCredentials: true });
+        const refreshRes = await axios.post(`${apiBaseUrl}/auth/refresh`, {}, { withCredentials: true });
         const newAccessToken = refreshRes.data?.data?.accessToken;
         
         if (newAccessToken) {

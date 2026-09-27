@@ -6,7 +6,7 @@ This document details the architectural implementation, database schemas, API ro
 
 ## 1. Contact Us (Phase 1)
 - **Model**: `ContactMessage` in `server/src/models/ContactMessage.js` storing `name`, `email`, `subject`, `message`, `emailSent`, and timestamps.
-- **Validation**: Zod schema (`contactSchema` in `server/src/validators/contact.validators.js`) enforcing length constraints, email validation, and honeypot detection.
+- **Validation**: Zod schema (`contactSchema` in `server/src/validators/contact.validators.js`) enforcing length constraints (min 3 characters for message, max 5000), email validation, and honeypot detection.
 - **Service & Resilience**: `ContactService.submitMessage` saves every inquiry to MongoDB first before attempting acknowledgment email dispatch. If third-party email transports experience transient outages or rate limits, the request succeeds and the record is safely retained in the database.
 - **Spam Mitigation & Rate Limiting**: Honeypot field `website_url` silently drops bot traffic without database write or email execution. Endpoint is protected by `contactLimiter` (5 submissions per 15 minutes per IP).
 - **Frontend**: `ContactForm.jsx` with input sanitization, dynamic submit states (idle, submitting, success, error), and accessible error banners embedded in `LandingPage.jsx`.

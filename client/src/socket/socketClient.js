@@ -15,8 +15,9 @@ export function connectSocket() {
   const token = getStoredAccessToken();
   if (!token) return null;
 
-  // In dev, Vite proxies /socket.io to backend :5000
-  socket = io('/', {
+  const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || '/';
+
+  socket = io(socketUrl, {
     auth: { token },
     withCredentials: true,
     transports: ['websocket', 'polling'],
