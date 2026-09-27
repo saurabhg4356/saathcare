@@ -40,10 +40,12 @@ export function AddExpenseModal({ isOpen, onClose, onExpenseLogged }) {
       setReceiptError('');
       setReceiptFile(null);
       if (members.length > 0) {
-        setSelectedParticipants(members.map(m => m._id));
+        const memberIds = members.map(m => (m?._id || m)?.toString()).filter(Boolean);
+        setSelectedParticipants(memberIds);
         const initialCustom = {};
         members.forEach(m => {
-          initialCustom[m._id] = '';
+          const id = (m?._id || m)?.toString();
+          if (id) initialCustom[id] = '';
         });
         setCustomAmounts(initialCustom);
       }
@@ -51,14 +53,15 @@ export function AddExpenseModal({ isOpen, onClose, onExpenseLogged }) {
   }, [members, isOpen]);
 
   const toggleParticipant = (userId) => {
-    if (selectedParticipants.includes(userId)) {
+    const idStr = (userId?._id || userId)?.toString();
+    if (selectedParticipants.includes(idStr)) {
       if (selectedParticipants.length === 1) {
         setError('At least one member must be selected in split');
         return;
       }
-      setSelectedParticipants(selectedParticipants.filter(id => id !== userId));
+      setSelectedParticipants(selectedParticipants.filter(id => id !== idStr));
     } else {
-      setSelectedParticipants([...selectedParticipants, userId]);
+      setSelectedParticipants([...selectedParticipants, idStr]);
     }
   };
 
@@ -144,10 +147,13 @@ export function AddExpenseModal({ isOpen, onClose, onExpenseLogged }) {
         payload.participantIds = selectedParticipants;
       } else {
         payload.customSplits = members
-          .map(m => ({
-            userId: m._id,
-            amountPaise: rupeesToPaise(customAmounts[m._id] || 0)
-          }))
+          .map(m => {
+            const memberId = (m?._id || m)?.toString();
+            return {
+              userId: memberId,
+              amountPaise: rupeesToPaise(customAmounts[memberId] || 0)
+            };
+          })
           .filter(s => s.amountPaise > 0);
       }
 
@@ -303,14 +309,16 @@ export function AddExpenseModal({ isOpen, onClose, onExpenseLogged }) {
                 Select family members to split among ({selectedParticipants.length} selected):
               </div>
               {members.map(m => {
-                const isSelected = selectedParticipants.includes(m._id);
+                const memberId = (m?._id || m)?.toString();
+                const memberName = m.name || `Member ${memberId?.slice(-4) || ''}`;
+                const isSelected = selectedParticipants.includes(memberId);
                 const sharePaise = isSelected && selectedParticipants.length > 0
                   ? Math.floor(totalPaise / selectedParticipants.length)
                   : 0;
 
                 return (
                   <label
-                    key={m._id}
+                    key={memberId}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -327,11 +335,11 @@ export function AddExpenseModal({ isOpen, onClose, onExpenseLogged }) {
                       <input
                         type="checkbox"
                         checked={isSelected}
-                        onChange={() => toggleParticipant(m._id)}
+                        onChange={() => toggleParticipant(memberId)}
                         style={{ width: '18px', height: '18px' }}
                       />
                       <span style={{ fontSize: '0.875rem', fontWeight: isSelected ? '600' : '400' }}>
-                        {m.name}
+                        {memberName}
                       </span>
                     </div>
                     <span style={{ fontSize: '0.85rem', color: isSelected ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: '500' }}>
@@ -343,23 +351,27 @@ export function AddExpenseModal({ isOpen, onClose, onExpenseLogged }) {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {members.map(m => (
-                <div key={m._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
-                  <span style={{ fontSize: '0.875rem', fontWeight: '500', minWidth: '140px' }}>{m.name}</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flex: 1 }}>
-                    <span style={{ color: 'var(--text-muted)' }}>₹</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      className="form-control"
-                      placeholder="0.00"
-                      value={customAmounts[m._id] || ''}
-                      onChange={(e) => handleCustomAmountChange(m._id, e.target.value)}
-                    />
+              {members.map(m => {
+                const memberId = (m?._id || m)?.toString();
+                const memberName = m.name || `Member ${memberId?.slice(-4) || ''}`;
+                return (
+                  <div key={memberId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+                    <span style={{ fontSize: '0.875rem', fontWeight: '500', minWidth: '140px' }}>{memberName}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flex: 1 }}>
+                      <span style={{ color: 'var(--text-muted)' }}>₹</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        className="form-control"
+                        placeholder="0.00"
+                        value={customAmounts[memberId] || ''}
+                        onChange={(e) => handleCustomAmountChange(memberId, e.target.value)}
+                      />
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
               <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
                 <span>Allocated: {formatPaiseToINR(customSumPaise)}</span>

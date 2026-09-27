@@ -32,32 +32,32 @@ export const authService = {
 
   async verifyEmail(token) {
     const res = await api.get(`/auth/verify-email/${token}`);
-    return res.data;
+    return res || {};
   },
 
   async resendVerification(email) {
     const res = await api.post('/auth/resend-verification', { email });
-    return res.data;
+    return res || {};
   },
 
   async forgotPassword(email) {
     const res = await api.post('/auth/forgot-password', { email });
-    return res.data;
+    return res || {};
   },
 
   async resetPassword(token, password) {
     const res = await api.post(`/auth/reset-password/${token}`, { password });
-    return res.data;
+    return res || {};
   },
 
   async requestDeletion() {
     const res = await api.post('/auth/request-deletion');
-    return res.data;
+    return res.data ?? res;
   },
 
   async cancelDeletion() {
     const res = await api.post('/auth/cancel-deletion');
-    return res.data;
+    return res || {};
   },
 
   async completeOnboarding() {

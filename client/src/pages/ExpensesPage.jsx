@@ -72,17 +72,27 @@ export function ExpensesPage() {
     }
   };
 
-  const activeEntries = expenses.filter(e => !e.isReversal);
-  const reversedEntries = expenses.filter(e => e.isReversal);
+  const activeEntries = (expenses || []).filter(e => !e?.isReversal);
+  const reversedEntries = (expenses || []).filter(e => e?.isReversal);
 
   // Find set of original IDs that have been reversed
   const reversedOriginalIds = new Set(
-    reversedEntries.map(r => r.originalEntryId?.toString() || r.originalEntryId?._id?.toString()).filter(Boolean)
+    reversedEntries
+      .map(r => (r?.originalEntryId?._id || r?.originalEntryId)?.toString())
+      .filter(Boolean)
   );
 
   const totalPaise = activeEntries
-    .filter(e => !reversedOriginalIds.has(e._id.toString()))
-    .reduce((acc, curr) => acc + curr.amountPaise, 0);
+    .filter(e => {
+      const id = (e?._id?._id || e?._id)?.toString();
+      return id && !reversedOriginalIds.has(id);
+    })
+    .reduce((acc, curr) => acc + (typeof curr?.amountPaise === 'number' ? curr.amountPaise : 0), 0);
+
+  const filteredExpenses = (expenses || []).filter(e => {
+    if (!categoryFilter) return true;
+    return e?.category === categoryFilter;
+  });
 
   return (
     <div>
@@ -190,18 +200,26 @@ export function ExpensesPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredExpenses.map(entry => {
-                const isReversed = reversedOriginalIds.has(entry._id.toString());
-                const isReversalEntry = entry.isReversal;
+              {filteredExpenses.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
+                    No expenses found matching the selected category filter.
+                  </td>
+                </tr>
+              ) : (
+                filteredExpenses.map(entry => {
+                  const entryId = (entry?._id?._id || entry?._id)?.toString();
+                  const isReversed = entryId ? reversedOriginalIds.has(entryId) : false;
+                  const isReversalEntry = Boolean(entry?.isReversal);
 
-                return (
-                  <tr
-                    key={entry._id}
-                    style={{
-                      opacity: isReversed || isReversalEntry ? 0.65 : 1,
-                      background: isReversalEntry ? 'rgba(244, 63, 94, 0.04)' : undefined
-                    }}
-                  >
+                  return (
+                    <tr
+                      key={entryId || Math.random()}
+                      style={{
+                        opacity: isReversed || isReversalEntry ? 0.65 : 1,
+                        background: isReversalEntry ? 'rgba(244, 63, 94, 0.04)' : undefined
+                      }}
+                    >
                     <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                       {formatDateTime(entry.createdAt)}
                     </td>
@@ -288,7 +306,8 @@ export function ExpensesPage() {
                     </td>
                   </tr>
                 );
-              })}
+              })
+            )}
             </tbody>
           </table>
         </div>

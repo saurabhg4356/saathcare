@@ -17,9 +17,15 @@ export function SecurityBanners() {
     setResendStatus(null);
     try {
       const res = await authService.resendVerification(user.email);
-      setResendStatus({ success: true, message: res.message || 'Verification email dispatched!' });
+      setResendStatus({
+        success: true,
+        message: res?.message || res?.data?.message || 'Verification email dispatched!'
+      });
     } catch (err) {
-      setResendStatus({ success: false, message: err.message || 'Failed to resend link' });
+      setResendStatus({
+        success: false,
+        message: err?.message || 'Failed to resend verification email'
+      });
     } finally {
       setResending(false);
     }

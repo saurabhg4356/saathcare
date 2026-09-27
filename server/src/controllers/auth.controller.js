@@ -105,7 +105,7 @@ export class AuthController {
       const { email } = req.body;
       const result = await AuthService.resendVerification(email);
       return res.status(200).json(
-        ApiResponse.success(null, result.message)
+        ApiResponse.success({ message: result.message }, result.message)
       );
     } catch (error) {
       next(error);
@@ -117,7 +117,7 @@ export class AuthController {
       const { email } = req.body;
       const result = await AuthService.forgotPassword(email);
       return res.status(200).json(
-        ApiResponse.success(null, result.message)
+        ApiResponse.success({ message: result.message }, result.message)
       );
     } catch (error) {
       next(error);
@@ -132,7 +132,7 @@ export class AuthController {
       // Clear any session cookie since old sessions are invalidated
       res.clearCookie('refreshToken', { path: '/' });
       return res.status(200).json(
-        ApiResponse.success(null, result.message)
+        ApiResponse.success({ message: result.message }, result.message)
       );
     } catch (error) {
       next(error);
@@ -155,7 +155,7 @@ export class AuthController {
     try {
       const result = await AuthService.cancelAccountDeletion(req.user._id);
       return res.status(200).json(
-        ApiResponse.success(null, result.message)
+        ApiResponse.success({ message: result.message }, result.message)
       );
     } catch (error) {
       next(error);
