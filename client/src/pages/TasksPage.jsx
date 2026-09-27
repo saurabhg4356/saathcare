@@ -21,7 +21,11 @@ export function TasksPage() {
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'calendar'
 
   const fetchTasks = useCallback(async () => {
-    if (!activeGroup?._id) return;
+    if (!activeGroup?._id) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     try {
       const params = {};
       if (statusFilter) params.status = statusFilter;

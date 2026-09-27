@@ -13,7 +13,11 @@ export function SettlementsPage() {
   const [loading, setLoading] = useState(true);
 
   const fetchSettlements = useCallback(async () => {
-    if (!activeGroup?._id) return;
+    if (!activeGroup?._id) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     try {
       const data = await expenseService.getSettlements(activeGroup._id);
       setSettlementData(data || { balances: [], settlements: [] });

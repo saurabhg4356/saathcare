@@ -24,7 +24,11 @@ export function ExpensesPage() {
   const [previewReceipt, setPreviewReceipt] = useState(null);
 
   const fetchExpenses = useCallback(async () => {
-    if (!activeGroup?._id) return;
+    if (!activeGroup?._id) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     try {
       const res = await expenseService.getLedger(activeGroup._id);
       setExpenses(res.data || []);
@@ -169,7 +173,15 @@ export function ExpensesPage() {
       </div>
 
       {/* Ledger Table */}
-      {loading ? (
+      {!activeGroup ? (
+        <div className="card" style={{ textAlign: 'center', padding: '3.5rem 1.5rem', color: 'var(--text-muted)' }}>
+          <Receipt size={40} style={{ margin: '0 auto 1rem auto', opacity: 0.4 }} />
+          <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>No Family Group Selected</h3>
+          <p style={{ fontSize: '0.9rem', maxWidth: '440px', margin: '0 auto 1.5rem auto' }}>
+            Please select or create a family care group from the top navigation to view and log elder-care expenses.
+          </p>
+        </div>
+      ) : loading ? (
         <div style={{ textAlign: 'center', padding: '4rem 0' }}>
           <div className="live-pulse" style={{ width: '12px', height: '12px', marginBottom: '1rem' }}></div>
           <div style={{ color: 'var(--text-secondary)' }}>Loading immutable ledger...</div>

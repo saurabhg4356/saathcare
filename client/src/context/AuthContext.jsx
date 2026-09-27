@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { authService } from '../services/authService.js';
-import { getStoredAccessToken } from '../services/api.js';
+import { getStoredAccessToken, setStoredAccessToken } from '../services/api.js';
 
 export const AuthContext = createContext(null);
 
@@ -19,6 +19,7 @@ export function AuthProvider({ children }) {
       const userData = await authService.getMe();
       setUser(userData);
     } catch (err) {
+      setStoredAccessToken(null);
       setUser(null);
     } finally {
       setLoading(false);
@@ -29,6 +30,7 @@ export function AuthProvider({ children }) {
     initAuth();
 
     const handleUnauthorized = () => {
+      setStoredAccessToken(null);
       setUser(null);
     };
 
@@ -54,6 +56,7 @@ export function AuthProvider({ children }) {
     try {
       await authService.logout();
     } finally {
+      setStoredAccessToken(null);
       sessionStorage.removeItem('saathcare_tour_shown');
       setUser(null);
     }

@@ -22,9 +22,16 @@ export function ContactForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.name.trim() || !formData.email.trim() || !formData.subject.trim() || !formData.message.trim()) {
+    const trimmedMessage = formData.message.trim();
+    if (!formData.name.trim() || !formData.email.trim() || !formData.subject.trim() || !trimmedMessage) {
       setStatus('error');
       setErrorMessage('Please fill in all required fields.');
+      return;
+    }
+
+    if (trimmedMessage.length < 3) {
+      setStatus('error');
+      setErrorMessage('Message must be at least 3 characters.');
       return;
     }
 
@@ -43,9 +50,23 @@ export function ContactForm() {
       });
     } catch (err) {
       setStatus('error');
-      setErrorMessage(
-        err.response?.data?.message || err.message || 'Failed to submit your message. Please try again.'
-      );
+
+      let errorMsg = 'Failed to submit your message. Please try again.';
+
+      // Extract specific details from Zod validation or backend ApiError
+      const details = err?.details || err?.response?.data?.error?.details || err?.response?.data?.details;
+      if (Array.isArray(details) && details.length > 0) {
+        errorMsg = details.map(d => d.message).join('. ');
+      } else {
+        errorMsg =
+          err?.response?.data?.error?.message ||
+          err?.response?.data?.message ||
+          err?.message ||
+          err?.error?.message ||
+          'Failed to submit your message. Please try again.';
+      }
+
+      setErrorMessage(errorMsg);
     }
   };
 
@@ -176,6 +197,7 @@ export function ContactForm() {
               value={formData.message}
               onChange={handleChange}
               required
+              minLength={3}
               maxLength={5000}
               disabled={status === 'submitting'}
               style={{ resize: 'vertical' }}

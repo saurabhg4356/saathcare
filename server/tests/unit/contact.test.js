@@ -23,6 +23,15 @@ describe('Contact Us Form & Service Unit Tests (Phase 1)', () => {
       expect(res.data.name).toBe('Priya Sharma');
       expect(res.data.email).toBe('priya@example.com');
     }
+
+    // Also accepts brief messages (e.g. 7-character 'nothing')
+    const briefRes = contactSchema.safeParse({
+      name: 'Saurabh GUPTA',
+      email: 'soulfulbhakti4356@gmail.com',
+      subject: "I can't see the expenses page",
+      message: 'nothing'
+    });
+    expect(briefRes.success).toBe(true);
   });
 
   it('rejects contact payload missing required fields or invalid email', () => {
@@ -30,7 +39,7 @@ describe('Contact Us Form & Service Unit Tests (Phase 1)', () => {
       name: '',
       email: 'invalid-email',
       subject: '',
-      message: 'short' // less than 10 chars
+      message: 'a' // less than 3 chars
     };
 
     const res = contactSchema.safeParse(invalid);
