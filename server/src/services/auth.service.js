@@ -125,17 +125,29 @@ export class AuthService {
     });
 
     if (!user) {
+      // Idempotency: Check if account was already verified with this specific token
+      const alreadyVerifiedUser = await User.findOne({ lastVerifiedTokenHash: candidateHash });
+      if (alreadyVerifiedUser) {
+        return {
+          verified: true,
+          alreadyVerified: true,
+          user: alreadyVerifiedUser.toJSON(),
+          message: 'Your email address is already verified!'
+        };
+      }
       throw ApiError.badRequest('Verification link is invalid or has expired. Please request a new link.');
     }
 
     user.isVerified = true;
+    user.lastVerifiedTokenHash = candidateHash;
     user.verificationTokenHash = null;
     user.verificationTokenExpiresAt = null;
     await user.save();
 
     return {
       verified: true,
-      user: user.toJSON()
+      user: user.toJSON(),
+      message: 'Your email address has been verified successfully!'
     };
   }
 

@@ -7,8 +7,18 @@ export function VerifyEmailPage() {
   const { token } = useParams();
   const [status, setStatus] = useState('verifying'); // 'verifying' | 'success' | 'error'
   const [message, setMessage] = useState('');
+  const hasRequestedRef = React.useRef(false);
 
   useEffect(() => {
+    if (!token) {
+      setStatus('error');
+      setMessage('No verification token provided in the URL.');
+      return;
+    }
+
+    if (hasRequestedRef.current) return;
+    hasRequestedRef.current = true;
+
     async function verify() {
       try {
         const res = await authService.verifyEmail(token);
@@ -20,12 +30,7 @@ export function VerifyEmailPage() {
       }
     }
 
-    if (token) {
-      verify();
-    } else {
-      setStatus('error');
-      setMessage('No verification token provided in the URL.');
-    }
+    verify();
   }, [token]);
 
   return (
@@ -74,26 +79,42 @@ export function VerifyEmailPage() {
               <CheckCircle2 size={36} />
             </div>
             <h2 style={{ fontSize: '22px', fontWeight: 'bold', color: '#1e293b', marginBottom: '8px' }}>
-              Email Verified!
+              Email Verified Successfully!
             </h2>
             <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px', lineHeight: 1.5 }}>
               {message}
             </p>
-            <Link
-              to="/dashboard"
-              className="btn btn-primary"
-              style={{
-                width: '100%',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                minHeight: '44px'
-              }}
-            >
-              Continue to Dashboard
-              <ArrowRight size={16} />
-            </Link>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <Link
+                to="/dashboard"
+                className="btn btn-primary"
+                style={{
+                  width: '100%',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  minHeight: '44px'
+                }}
+              >
+                Continue to Dashboard
+                <ArrowRight size={16} />
+              </Link>
+              <Link
+                to="/login"
+                className="btn btn-secondary"
+                style={{
+                  width: '100%',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  minHeight: '40px'
+                }}
+              >
+                Sign In to Account
+              </Link>
+            </div>
           </div>
         )}
 
@@ -113,25 +134,41 @@ export function VerifyEmailPage() {
               <AlertCircle size={36} />
             </div>
             <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1e293b', marginBottom: '8px' }}>
-              Verification Failed
+              Verification Notice
             </h2>
             <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px', lineHeight: 1.5 }}>
               {message}
             </p>
-            <Link
-              to="/login"
-              className="btn btn-primary"
-              style={{
-                width: '100%',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                minHeight: '44px'
-              }}
-            >
-              Return to Login
-            </Link>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <Link
+                to="/login"
+                className="btn btn-primary"
+                style={{
+                  width: '100%',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  minHeight: '44px'
+                }}
+              >
+                Proceed to Login
+              </Link>
+              <Link
+                to="/dashboard"
+                className="btn btn-secondary"
+                style={{
+                  width: '100%',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  minHeight: '40px'
+                }}
+              >
+                Go to Dashboard
+              </Link>
+            </div>
           </div>
         )}
       </div>

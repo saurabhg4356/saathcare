@@ -160,20 +160,7 @@ export function NotificationDrawer() {
       </button>
 
       {isOpen && (
-        <div style={{
-          position: 'absolute',
-          top: 'calc(100% + 8px)',
-          right: 0,
-          width: '340px',
-          maxWidth: '90vw',
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-hover)',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-lg)',
-          zIndex: 100,
-          overflow: 'hidden',
-          animation: 'fadeIn 150ms ease-out'
-        }}>
+        <div className="notification-popover">
           {/* Header */}
           <div style={{
             padding: '0.85rem 1rem',

@@ -54,8 +54,13 @@ export function AuthProvider({ children }) {
     try {
       await authService.logout();
     } finally {
+      sessionStorage.removeItem('saathcare_tour_shown');
       setUser(null);
     }
+  };
+
+  const markOnboardingComplete = () => {
+    setUser(prev => prev ? { ...prev, hasSeenOnboarding: true } : prev);
   };
 
   return (
@@ -67,6 +72,7 @@ export function AuthProvider({ children }) {
         login,
         register,
         logout,
+        markOnboardingComplete,
         refreshUser: initAuth
       }}
     >

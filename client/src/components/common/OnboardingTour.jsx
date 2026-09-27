@@ -112,11 +112,11 @@ export function OnboardingTour({ isOpen, onClose, onComplete }) {
         className="card"
         style={{
           width: '100%',
-          maxWidth: '560px',
-          padding: '2.25rem',
+          maxWidth: '430px',
+          padding: '1.35rem 1.5rem',
           position: 'relative',
           border: '1px solid var(--border-hover)',
-          boxShadow: 'var(--shadow-glow)',
+          boxShadow: 'var(--shadow-lg)',
           animation: 'fadeIn 200ms ease-out'
         }}
       >
@@ -126,33 +126,33 @@ export function OnboardingTour({ isOpen, onClose, onComplete }) {
           onClick={handleFinish}
           style={{
             position: 'absolute',
-            top: '1.25rem',
-            right: '1.25rem',
+            top: '1rem',
+            right: '1rem',
             background: 'transparent',
             border: 'none',
             color: 'var(--text-muted)',
             cursor: 'pointer',
-            padding: '0.4rem',
+            padding: '0.3rem',
             display: 'flex',
             alignItems: 'center',
             gap: '0.25rem',
-            fontSize: '0.8rem'
+            fontSize: '0.75rem'
           }}
           aria-label="Skip onboarding tour"
         >
           <span>Skip</span>
-          <X size={16} />
+          <X size={15} />
         </button>
 
         {/* Step indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
           <span
             className="badge badge-cyan"
-            style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}
+            style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0.2rem 0.5rem' }}
           >
             {step.badge}
           </span>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>
             {currentStep + 1} of {STEPS.length}
           </span>
         </div>
@@ -160,40 +160,40 @@ export function OnboardingTour({ isOpen, onClose, onComplete }) {
         {/* Step Graphic / Icon */}
         <div
           style={{
-            width: '64px',
-            height: '64px',
-            borderRadius: '16px',
+            width: '46px',
+            height: '46px',
+            borderRadius: '12px',
             background: 'var(--bg-tertiary)',
             border: `1px solid ${step.accentColor}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: '1.25rem'
+            marginBottom: '0.85rem'
           }}
         >
-          <IconComponent size={32} color={step.accentColor} />
+          <IconComponent size={24} color={step.accentColor} />
         </div>
 
         {/* Step Content */}
-        <h3 style={{ fontSize: '1.4rem', marginBottom: '0.35rem', color: 'var(--text-primary)' }}>
+        <h3 style={{ fontSize: '1.15rem', marginBottom: '0.2rem', color: 'var(--text-primary)' }}>
           {step.title}
         </h3>
-        <h4 style={{ fontSize: '0.95rem', fontWeight: '500', color: step.accentColor, marginBottom: '1rem' }}>
+        <h4 style={{ fontSize: '0.825rem', fontWeight: '500', color: step.accentColor, marginBottom: '0.65rem' }}>
           {step.subtitle}
         </h4>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.925rem', lineHeight: '1.65', minHeight: '80px' }}>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.5', minHeight: '60px', marginBottom: '0.75rem' }}>
           {step.description}
         </p>
 
         {/* Step Progress Dots */}
-        <div style={{ display: 'flex', gap: '0.5rem', margin: '1.5rem 0' }}>
+        <div style={{ display: 'flex', gap: '0.4rem', margin: '0.85rem 0' }}>
           {STEPS.map((_, idx) => (
             <div
               key={idx}
               onClick={() => setCurrentStep(idx)}
               style={{
                 flex: 1,
-                height: '5px',
+                height: '4px',
                 borderRadius: 'var(--radius-full)',
                 background: idx === currentStep ? step.accentColor : 'var(--border-subtle)',
                 cursor: 'pointer',
@@ -204,15 +204,15 @@ export function OnboardingTour({ isOpen, onClose, onComplete }) {
         </div>
 
         {/* Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginTop: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginTop: '1rem' }}>
           <button
             type="button"
             className="btn btn-secondary btn-sm"
             onClick={handlePrev}
             disabled={currentStep === 0}
-            style={{ opacity: currentStep === 0 ? 0.3 : 1 }}
+            style={{ opacity: currentStep === 0 ? 0.3 : 1, padding: '0.35rem 0.65rem', fontSize: '0.8rem' }}
           >
-            <ArrowLeft size={16} /> Back
+            <ArrowLeft size={14} /> Back
           </button>
 
           <button
@@ -220,14 +220,15 @@ export function OnboardingTour({ isOpen, onClose, onComplete }) {
             className="btn btn-primary btn-sm"
             onClick={handleNext}
             disabled={isFinishing}
+            style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
           >
             {currentStep === STEPS.length - 1 ? (
               <>
-                <Check size={16} /> Get Started
+                <Check size={14} /> Get Started
               </>
             ) : (
               <>
-                Next <ArrowRight size={16} />
+                Next <ArrowRight size={14} />
               </>
             )}
           </button>

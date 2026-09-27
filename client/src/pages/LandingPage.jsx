@@ -46,34 +46,28 @@ export function LandingPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Top Navigation */}
-      <header style={{
-        borderBottom: '1px solid var(--border-subtle)',
-        background: 'var(--bg-secondary)',
-        backdropFilter: 'blur(12px)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 40
-      }}>
-        <div className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '74px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      <header className="landing-header">
+        <div className="app-container landing-navbar-container">
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none', flexShrink: 0 }}>
             <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '12px',
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
               background: 'var(--grad-brand)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: 'var(--shadow-glow)'
+              boxShadow: 'var(--shadow-glow)',
+              flexShrink: 0
             }}>
-              <HeartHandshake size={24} color="#ffffff" />
+              <HeartHandshake size={20} color="#ffffff" />
             </div>
-            <span style={{ fontSize: '1.35rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
+            <span className="landing-brand-text" style={{ fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
               Saath<span style={{ color: 'var(--accent-cyan)' }}>Care</span>
             </span>
-          </div>
+          </Link>
 
-          <nav style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <nav className="landing-nav-actions">
             <div className="landing-nav-links" style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
               <a href="#what-we-do" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: '500', textDecoration: 'none' }}>
                 What We Do
@@ -89,10 +83,10 @@ export function LandingPage() {
 
             <ThemeToggle />
 
-            <Link to="/login" className="btn btn-secondary btn-sm" style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}>
+            <Link to="/login" className="btn btn-secondary btn-sm landing-signin-btn">
               Sign In
             </Link>
-            <Link to="/register" className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}>
+            <Link to="/register" className="btn btn-primary btn-sm landing-cta-btn">
               Get Started
             </Link>
           </nav>

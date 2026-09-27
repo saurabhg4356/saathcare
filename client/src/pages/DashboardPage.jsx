@@ -31,7 +31,7 @@ import { CategoryExpenseAnalytics } from '../components/dashboard/CategoryExpens
 
 export function DashboardPage() {
   const { activeGroup, refreshGroups } = useFamily();
-  const { user } = useAuth();
+  const { user, markOnboardingComplete } = useAuth();
   const { subscribe } = useSocket();
 
   const [tasks, setTasks] = useState([]);
@@ -46,10 +46,20 @@ export function DashboardPage() {
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
 
   useEffect(() => {
-    if (user && user.hasSeenOnboarding === false) {
+    const sessionSeen = sessionStorage.getItem('saathcare_tour_shown');
+    if (user && user.hasSeenOnboarding === false && !sessionSeen) {
       setIsOnboardingOpen(true);
+      sessionStorage.setItem('saathcare_tour_shown', 'true');
     }
   }, [user]);
+
+  const handleCloseOnboarding = () => {
+    setIsOnboardingOpen(false);
+    sessionStorage.setItem('saathcare_tour_shown', 'true');
+    if (user?.hasSeenOnboarding === false) {
+      markOnboardingComplete?.();
+    }
+  };
 
   const loadDashboardData = useCallback(async () => {
     if (!activeGroup?._id) return;
@@ -412,8 +422,8 @@ export function DashboardPage() {
 
       <OnboardingTour
         isOpen={isOnboardingOpen}
-        onClose={() => setIsOnboardingOpen(false)}
-        onComplete={() => setIsOnboardingOpen(false)}
+        onClose={handleCloseOnboarding}
+        onComplete={handleCloseOnboarding}
       />
     </div>
   );

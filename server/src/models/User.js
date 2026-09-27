@@ -57,6 +57,10 @@ const userSchema = new mongoose.Schema(
     hasSeenOnboarding: {
       type: Boolean,
       default: false
+    },
+    lastVerifiedTokenHash: {
+      type: String,
+      default: null
     }
   },
   {
@@ -66,6 +70,7 @@ const userSchema = new mongoose.Schema(
         delete ret.password;
         delete ret.refreshTokenHash;
         delete ret.verificationTokenHash;
+        delete ret.lastVerifiedTokenHash;
         delete ret.passwordResetTokenHash;
         delete ret.__v;
         return ret;
