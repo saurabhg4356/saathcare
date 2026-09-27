@@ -29,7 +29,7 @@ NODE_ENV=production
 PORT=5000
 
 # Client Application URL (For CORS Whitelist & Invite Links)
-CLIENT_URL=https://saathcare.vercel.app
+CLIENT_URL=https://saathcare-client.vercel.app
 
 # Database Connection (MongoDB Atlas)
 MONGODB_URI=mongodb+srv://<user>:<password>@cluster0.mongodb.net/saathcare?retryWrites=true&w=majority
@@ -80,8 +80,8 @@ AWS_S3_BUCKET=saathcare-receipts-prod
 
 ### Frontend Environment Variables (`Vercel Dashboard` / `client/.env.production`):
 ```env
-VITE_API_URL=https://saathcare-server.onrender.com
-VITE_SOCKET_URL=https://saathcare-server.onrender.com
+VITE_API_URL=https://saathcare.onrender.com
+VITE_SOCKET_URL=https://saathcare.onrender.com
 ```
 
 ---

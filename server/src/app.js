@@ -24,19 +24,27 @@ app.use(helmet());
 // Cross-Origin Resource Sharing with credentials support
 const allowedOrigins = [
   env.CLIENT_URL,
+  'https://saathcare-client.vercel.app',
+  'https://saathcare.vercel.app',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:3000'
 ].filter(Boolean);
 
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  if (/^https:\/\/saathcare.*\.vercel\.app$/i.test(origin)) return true;
+  return false;
+};
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl)
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (isOriginAllowed(origin)) {
         callback(null, true);
       } else {
-        callback(new Error(`CORS policy does not allow access from origin ${origin}`));
+        callback(null, false);
       }
     },
     credentials: true,

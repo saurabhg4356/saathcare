@@ -461,10 +461,11 @@ MongoDB Atlas (Managed Database Replica Set)
 
 ## 21. Live Application
 
-* **Frontend Application**: `https://saathcare.vercel.app` *(or custom production domain)*
-* **Backend API Gateway**: `https://saathcare-server.onrender.com`
-* **Liveness Probe**: `https://saathcare-server.onrender.com/health`
-* **Readiness Probe**: `https://saathcare-server.onrender.com/ready`
+* **Frontend Application**: [https://saathcare-client.vercel.app](https://saathcare-client.vercel.app)
+* **Backend API Gateway**: [https://saathcare.onrender.com](https://saathcare.onrender.com)
+* **Liveness Probe**: [https://saathcare.onrender.com/health](https://saathcare.onrender.com/health)
+* **Readiness Probe**: [https://saathcare.onrender.com/ready](https://saathcare.onrender.com/ready)
+* **Real Database Statistics**: [https://saathcare.onrender.com/api/stats](https://saathcare.onrender.com/api/stats)
 
 ---
 

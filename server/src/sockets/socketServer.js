@@ -8,14 +8,24 @@ import { SOCKET_EVENTS } from '../constants/socketEvents.js';
 let io = null;
 
 export function initSocketServer(httpServer) {
+  const allowedOrigins = [
+    env.CLIENT_URL,
+    'https://saathcare-client.vercel.app',
+    'https://saathcare.vercel.app',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:3000'
+  ].filter(Boolean);
+
   io = new Server(httpServer, {
     cors: {
-      origin: [
-        env.CLIENT_URL,
-        'http://localhost:5173',
-        'http://127.0.0.1:5173',
-        'http://localhost:3000'
-      ].filter(Boolean),
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin) || /^https:\/\/saathcare.*\.vercel\.app$/i.test(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
       methods: ['GET', 'POST'],
       credentials: true
     },
