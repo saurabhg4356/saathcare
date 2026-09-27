@@ -11,11 +11,11 @@ export function AppLayout() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const navItems = [
-    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/tasks', label: 'Tasks & Duties', icon: CheckSquare },
-    { to: '/expenses', label: 'Expense Ledger', icon: Receipt },
-    { to: '/settlements', label: 'Settlements', icon: Scale },
-    { to: '/family', label: 'Care Team', icon: Users }
+    { to: '/dashboard', label: 'Dashboard', shortLabel: 'Dashboard', icon: LayoutDashboard },
+    { to: '/tasks', label: 'Tasks & Duties', shortLabel: 'Duties', icon: CheckSquare },
+    { to: '/expenses', label: 'Expense Ledger', shortLabel: 'Ledger', icon: Receipt },
+    { to: '/settlements', label: 'Settlements', shortLabel: 'Balances', icon: Scale },
+    { to: '/family', label: 'Care Team', shortLabel: 'Family', icon: Users }
   ];
 
   return (
@@ -23,14 +23,14 @@ export function AppLayout() {
       <SecurityBanners />
       <Navbar />
 
-      {/* Sub-navigation bar */}
+      {/* Desktop Sub-navigation bar */}
       {activeGroup && (
-        <div style={{
+        <div className="desktop-subnav" style={{
           background: 'rgba(15, 23, 42, 0.65)',
           borderBottom: '1px solid var(--border-subtle)',
           backdropFilter: 'blur(8px)'
         }}>
-          <div className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', overflowX: 'auto', padding: '0 1.5rem' }}>
+          <div className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.5rem' }}>
             <nav style={{ display: 'flex', gap: '0.25rem' }}>
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -59,7 +59,7 @@ export function AppLayout() {
               })}
             </nav>
 
-            <div style={{ display: 'none', md: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
               <span>Caring for:</span>
               <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>
                 {activeGroup.careRecipientName}
@@ -70,7 +70,7 @@ export function AppLayout() {
       )}
 
       {/* Main page content */}
-      <main style={{ flex: 1, padding: '2rem 0' }}>
+      <main className="main-app-content" style={{ flex: 1, padding: '2rem 0' }}>
         <div className="app-container">
           {!loading && familyGroups.length === 0 ? (
             <div className="card flex-center" style={{ flexDirection: 'column', padding: '4rem 2rem', textAlign: 'center' }}>
@@ -104,6 +104,25 @@ export function AppLayout() {
           )}
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation Bar */}
+      {activeGroup && (
+        <nav className="mobile-bottom-nav" aria-label="Mobile Navigation">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}
+              >
+                <Icon size={18} />
+                <span>{item.shortLabel}</span>
+              </NavLink>
+            );
+          })}
+        </nav>
+      )}
 
       <CreateGroupModal
         isOpen={isCreateOpen}

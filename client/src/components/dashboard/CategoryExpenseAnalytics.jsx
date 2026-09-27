@@ -115,7 +115,7 @@ export function CategoryExpenseAnalytics({ expenses }) {
       {/* Category breakdown items */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))',
         gap: '0.85rem'
       }}>
         {categoriesWithSpending.map(cat => {

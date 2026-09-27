@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext.jsx';
 import { useSocket } from '../../context/SocketContext.jsx';
 import { notificationService } from '../../services/notificationService.js';
 import {
@@ -20,26 +21,30 @@ export function NotificationDrawer() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
+  const { user } = useAuth();
   const { subscribe } = useSocket();
   const navigate = useNavigate();
   const drawerRef = useRef(null);
 
   const loadNotifications = useCallback(async () => {
+    if (!user) return;
     try {
       setLoading(true);
       const res = await notificationService.getNotifications({ limit: 15 });
-      setNotifications(res.notifications || []);
-      setUnreadCount(res.unreadCount || 0);
+      setNotifications(res?.notifications || []);
+      setUnreadCount(res?.unreadCount || 0);
     } catch (err) {
-      console.error('Failed to load notifications', err);
+      console.warn('Could not load notifications:', err.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    loadNotifications();
-  }, [loadNotifications]);
+    if (user) {
+      loadNotifications();
+    }
+  }, [loadNotifications, user]);
 
   // Real-time listener for incoming in-app notifications
   useEffect(() => {

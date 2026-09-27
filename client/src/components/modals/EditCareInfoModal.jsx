@@ -148,7 +148,7 @@ export function EditCareInfoModal({ isOpen, onClose, familyGroup, onUpdated }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent-rose)', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.75rem' }}>
               <ShieldAlert size={16} /> Emergency Contact
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.75rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))', gap: '0.75rem' }}>
               <div className="form-group">
                 <label className="form-label" htmlFor="ec-name">Contact Name</label>
                 <input
@@ -193,7 +193,7 @@ export function EditCareInfoModal({ isOpen, onClose, familyGroup, onUpdated }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent-cyan)', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.75rem' }}>
               <Stethoscope size={16} /> Primary Physician & Hospital
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.75rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))', gap: '0.75rem' }}>
               <div className="form-group">
                 <label className="form-label" htmlFor="doc-name">Doctor Name</label>
                 <input

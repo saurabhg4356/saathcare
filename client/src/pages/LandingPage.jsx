@@ -73,26 +73,27 @@ export function LandingPage() {
             </span>
           </div>
 
-          <nav style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <a href="#what-we-do" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: '500', textDecoration: 'none' }}>
-              What We Do
-            </a>
-            <a href="#how-it-works" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: '500', textDecoration: 'none' }}>
-              How It Works
-            </a>
-            <a href="#contact-us" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: '500', textDecoration: 'none' }}>
-              Contact
-            </a>
-
-            <div style={{ width: '1px', height: '24px', background: 'var(--border-subtle)' }}></div>
+          <nav style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div className="landing-nav-links" style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+              <a href="#what-we-do" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: '500', textDecoration: 'none' }}>
+                What We Do
+              </a>
+              <a href="#how-it-works" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: '500', textDecoration: 'none' }}>
+                How It Works
+              </a>
+              <a href="#contact-us" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: '500', textDecoration: 'none' }}>
+                Contact
+              </a>
+              <div style={{ width: '1px', height: '24px', background: 'var(--border-subtle)' }}></div>
+            </div>
 
             <ThemeToggle />
 
-            <Link to="/login" className="btn btn-secondary btn-sm">
+            <Link to="/login" className="btn btn-secondary btn-sm" style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}>
               Sign In
             </Link>
-            <Link to="/register" className="btn btn-primary btn-sm">
-              Get Started Free
+            <Link to="/register" className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}>
+              Get Started
             </Link>
           </nav>
         </div>

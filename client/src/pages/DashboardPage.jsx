@@ -144,7 +144,7 @@ export function DashboardPage() {
         </div>
 
         {/* Quick Action Buttons */}
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div className="dashboard-quick-actions">
           <button
             type="button"
             className="btn btn-secondary btn-sm"
@@ -277,7 +277,7 @@ export function DashboardPage() {
       <CategoryExpenseAnalytics expenses={expenses} />
 
       {/* Two Column Layout: Urgent Duties & Recent Ledger */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem' }}>
+      <div className="dashboard-two-col" style={{ marginBottom: '2rem' }}>
         {/* Column 1: Duties Checklist */}
         <div className="card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>

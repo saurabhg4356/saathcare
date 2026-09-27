@@ -32,27 +32,27 @@ export function Navbar() {
         zIndex: 50,
         backdropFilter: 'blur(10px)'
       }}>
-        <div className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '70px' }}>
+        <div className="app-container navbar-container">
           {/* Logo & Brand */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-            <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+            <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none', flexShrink: 0 }}>
               <div style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '12px',
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
                 background: 'var(--grad-brand)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 boxShadow: 'var(--shadow-glow)'
               }}>
-                <HeartHandshake size={24} color="#ffffff" />
+                <HeartHandshake size={20} color="#ffffff" />
               </div>
               <div>
-                <span style={{ fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.02em', color: '#ffffff' }}>
+                <span className="navbar-brand-text" style={{ fontSize: '1.2rem', fontWeight: '800', letterSpacing: '-0.02em', color: '#ffffff' }}>
                   Saath<span style={{ color: 'var(--accent-cyan)' }}>Care</span>
                 </span>
-                <span style={{ display: 'block', fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <span className="navbar-brand-sub">
                   Elder-Care Coordination
                 </span>
               </div>
@@ -64,14 +64,14 @@ export function Navbar() {
                 <button
                   type="button"
                   onClick={() => setIsGroupDropdownOpen(!isGroupDropdownOpen)}
-                  className="btn btn-secondary btn-sm"
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border-hover)' }}
+                  className="btn btn-secondary btn-sm family-select-btn"
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border-hover)', padding: '0.4rem 0.65rem' }}
                 >
-                  <Users size={16} color="var(--accent-teal)" />
-                  <span style={{ maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <Users size={14} color="var(--accent-teal)" style={{ flexShrink: 0 }} />
+                  <span className="family-select-text" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {activeGroup ? activeGroup.careRecipientName : 'Select Family'}
                   </span>
-                  <ChevronDown size={14} />
+                  <ChevronDown size={12} style={{ flexShrink: 0 }} />
                 </button>
 
                 {isGroupDropdownOpen && (
@@ -85,6 +85,7 @@ export function Navbar() {
                       border: '1px solid var(--border-hover)',
                       borderRadius: 'var(--radius-md)',
                       width: '240px',
+                      maxWidth: '90vw',
                       boxShadow: 'var(--shadow-lg)',
                       zIndex: 100,
                       overflow: 'hidden'
@@ -149,27 +150,31 @@ export function Navbar() {
           </div>
 
           {/* Right side actions: Socket status, notifications, theme toggle, user profile, logout */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+          <div className="navbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexShrink: 0 }}>
             {/* Live Socket Status */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              padding: '0.3rem 0.65rem',
-              borderRadius: 'var(--radius-full)',
-              background: isConnected ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)',
-              border: `1px solid ${isConnected ? 'rgba(16, 185, 129, 0.25)' : 'rgba(244, 63, 94, 0.25)'}`,
-              fontSize: '0.75rem',
-              fontWeight: '600'
-            }}>
+            <div
+              title={isConnected ? 'Real-Time Live Sync Active' : 'Connecting to Real-Time Gateway...'}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.3rem 0.55rem',
+                borderRadius: 'var(--radius-full)',
+                background: isConnected ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)',
+                border: `1px solid ${isConnected ? 'rgba(16, 185, 129, 0.25)' : 'rgba(244, 63, 94, 0.25)'}`,
+                fontSize: '0.75rem',
+                fontWeight: '600'
+              }}
+            >
               <span className={isConnected ? 'live-pulse' : ''} style={{
-                width: '8px',
-                height: '8px',
+                width: '7px',
+                height: '7px',
                 borderRadius: '50%',
-                background: isConnected ? 'var(--accent-emerald)' : 'var(--accent-rose)'
+                background: isConnected ? 'var(--accent-emerald)' : 'var(--accent-rose)',
+                display: 'inline-block'
               }}></span>
-              <span style={{ color: isConnected ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
-                {isConnected ? 'Live Sync' : 'Reconnecting'}
+              <span className="navbar-live-text" style={{ color: isConnected ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
+                {isConnected ? 'Live Sync' : 'Offline'}
               </span>
             </div>
 
@@ -180,19 +185,20 @@ export function Navbar() {
             <ThemeToggle />
 
             {/* User Profile & Logout */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ textAlign: 'right', display: 'none', md: 'block' }}>
-                <div style={{ fontSize: '0.875rem', fontWeight: '600' }}>{user?.name}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{user?.email}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div className="navbar-user-info" style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>{user?.name}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{user?.email}</div>
               </div>
               <button
                 type="button"
                 onClick={handleLogout}
                 className="btn btn-secondary btn-sm"
                 title="Logout"
-                style={{ padding: '0.5rem' }}
+                style={{ padding: '0.45rem', minWidth: '36px', minHeight: '36px' }}
+                aria-label="Logout"
               >
-                <LogOut size={16} />
+                <LogOut size={15} />
               </button>
             </div>
           </div>

@@ -1,18 +1,18 @@
-import axios from 'axios';
+import api from './api.js';
 
 export const notificationService = {
   async getNotifications(params = {}) {
-    const response = await axios.get('/api/notifications', { params });
-    return response.data?.data || { notifications: [], unreadCount: 0 };
+    const response = await api.get('/notifications', { params });
+    return response.data || { notifications: [], unreadCount: 0 };
   },
 
   async markAsRead(id) {
-    const response = await axios.patch(`/api/notifications/${id}/read`);
-    return response.data?.data;
+    const response = await api.patch(`/notifications/${id}/read`);
+    return response.data;
   },
 
   async markAllAsRead() {
-    const response = await axios.patch('/api/notifications/read-all');
-    return response.data?.data;
+    const response = await api.patch('/notifications/read-all');
+    return response.data;
   }
 };

@@ -13,7 +13,7 @@ export default function App() {
     <ErrorBoundary>
       <ThemeProvider>
         <OfflineBanner />
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <AuthProvider>
             <FamilyProvider>
               <SocketProvider>
