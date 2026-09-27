@@ -13,7 +13,14 @@ dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().default(5000),
-  CLIENT_URL: z.string().url().default('http://localhost:3000'),
+  CLIENT_URL: z.string().trim().default('http://localhost:3000').transform(val => {
+    if (!val) return 'http://localhost:3000';
+    let url = val.trim();
+    if (!/^https?:\/\//i.test(url)) {
+      url = `https://${url}`;
+    }
+    return url.replace(/\/+$/, '');
+  }),
   MONGODB_URI: z.string().min(1, 'MONGODB_URI is required').default('mongodb://127.0.0.1:27017/saathcare'),
 
   // JWT configuration
