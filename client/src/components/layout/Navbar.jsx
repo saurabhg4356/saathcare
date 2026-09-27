@@ -39,8 +39,8 @@ export function Navbar() {
   }, [isGroupDropdownOpen]);
 
   const handleLogout = async () => {
+    navigate('/', { replace: true });
     await logout();
-    navigate('/');
   };
 
   const renderDropdownMenu = (isMobile = false) => (
@@ -138,7 +138,7 @@ export function Navbar() {
                   <HeartHandshake size={20} color="#ffffff" />
                 </div>
                 <div>
-                  <span className="navbar-brand-text" style={{ fontSize: '1.2rem', fontWeight: '800', letterSpacing: '-0.02em', color: '#ffffff', whiteSpace: 'nowrap' }}>
+                  <span className="navbar-brand-text" style={{ fontSize: '1.2rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
                     Saath<span style={{ color: 'var(--accent-cyan)' }}>Care</span>
                   </span>
                   <span className="navbar-brand-sub">

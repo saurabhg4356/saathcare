@@ -83,16 +83,16 @@ export function FamilyDetailPage() {
       <div style={{
         padding: '0.85rem 1.25rem',
         borderRadius: 'var(--radius-md)',
-        background: 'rgba(20, 184, 166, 0.08)',
-        border: '1px solid rgba(20, 184, 166, 0.2)',
+        background: 'rgba(20, 184, 166, 0.1)',
+        border: '1px solid rgba(20, 184, 166, 0.3)',
         display: 'flex',
         alignItems: 'center',
         gap: '0.75rem',
         marginBottom: '2rem'
       }}>
         <Shield size={20} color="var(--accent-teal)" style={{ flexShrink: 0 }} />
-        <div style={{ fontSize: '0.85rem', color: '#ccfbf1' }}>
-          <strong>Equal Permission Model:</strong> All connected family members have equal permissions to create duties, mark tasks complete, log medical expenses, and view settlements.
+        <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: '1.5' }}>
+          <strong style={{ color: 'var(--accent-teal)' }}>Equal Permission Model:</strong> All connected family members have equal permissions to create duties, mark tasks complete, log medical expenses, and view settlements.
         </div>
       </div>
 

@@ -120,41 +120,40 @@ export function OnboardingTour({ isOpen, onClose, onComplete }) {
           animation: 'fadeIn 200ms ease-out'
         }}
       >
-        {/* Skip / Close Button */}
-        <button
-          type="button"
-          onClick={handleFinish}
-          style={{
-            position: 'absolute',
-            top: '1rem',
-            right: '1rem',
-            background: 'transparent',
-            border: 'none',
-            color: 'var(--text-muted)',
-            cursor: 'pointer',
-            padding: '0.3rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.25rem',
-            fontSize: '0.75rem'
-          }}
-          aria-label="Skip onboarding tour"
-        >
-          <span>Skip</span>
-          <X size={15} />
-        </button>
-
-        {/* Step indicator */}
+        {/* Top Header Row: Badge & Step Indicator on Left, Skip on Right */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-          <span
-            className="badge badge-cyan"
-            style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0.2rem 0.5rem' }}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <span
+              className="badge badge-cyan"
+              style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0.2rem 0.5rem' }}
+            >
+              {step.badge}
+            </span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+              Step {currentStep + 1} of {STEPS.length}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleFinish}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+              padding: '0.25rem 0.4rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              fontSize: '0.75rem',
+              borderRadius: 'var(--radius-sm)'
+            }}
+            aria-label="Skip onboarding tour"
           >
-            {step.badge}
-          </span>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>
-            {currentStep + 1} of {STEPS.length}
-          </span>
+            <span>Skip</span>
+            <X size={15} />
+          </button>
         </div>
 
         {/* Step Graphic / Icon */}

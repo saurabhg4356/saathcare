@@ -59,8 +59,8 @@ export function ReverseExpenseModal({ isOpen, onClose, expense, onExpenseReverse
           marginBottom: '1.25rem'
         }}>
           <AlertTriangle size={20} color="var(--accent-amber)" style={{ flexShrink: 0, marginTop: '2px' }} />
-          <div style={{ fontSize: '0.825rem', color: '#fef3c7', lineHeight: '1.5' }}>
-            <strong>Append-Only Accounting Rule:</strong> This entry will not be deleted or edited. Instead, a permanent offsetting reversal will be written to the ledger to zero out the balance and maintain an immutable audit trail.
+          <div style={{ fontSize: '0.825rem', color: 'var(--text-primary)', lineHeight: '1.5' }}>
+            <strong style={{ color: 'var(--accent-amber)' }}>Append-Only Accounting Rule:</strong> This entry will not be deleted or edited. Instead, a permanent offsetting reversal will be written to the ledger to zero out the balance and maintain an immutable audit trail.
           </div>
         </div>
 

@@ -45,7 +45,7 @@ export function RegisterPage() {
             <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--grad-brand)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <HeartHandshake size={24} color="#ffffff" />
             </div>
-            <span style={{ fontSize: '1.4rem', fontWeight: '800', color: '#ffffff' }}>
+            <span style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-primary)' }}>
               Saath<span style={{ color: 'var(--accent-cyan)' }}>Care</span>
             </span>
           </Link>

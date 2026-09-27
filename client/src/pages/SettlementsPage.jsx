@@ -68,8 +68,8 @@ export function SettlementsPage() {
         marginBottom: '2rem'
       }}>
         <Info size={20} color="var(--accent-indigo)" style={{ flexShrink: 0, marginTop: '2px' }} />
-        <div style={{ fontSize: '0.825rem', color: '#e0e7ff', lineHeight: '1.6' }}>
-          <strong>Greedy Debt-Minimization Engine:</strong> Repayments are calculated on the backend using an $O(N \log N)$ greedy algorithm matching the largest debtor with the largest creditor. All financial arithmetic runs in integer paise to eliminate rounding discrepancies.
+        <div style={{ fontSize: '0.825rem', color: 'var(--text-primary)', lineHeight: '1.6' }}>
+          <strong style={{ color: 'var(--accent-indigo)' }}>Greedy Debt-Minimization Engine:</strong> Repayments are calculated on the backend using an $O(N \log N)$ greedy algorithm matching the largest debtor with the largest creditor. All financial arithmetic runs in integer paise to eliminate rounding discrepancies.
         </div>
       </div>
 

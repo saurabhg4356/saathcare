@@ -26,7 +26,7 @@ export function AppLayout() {
       {/* Desktop Sub-navigation bar */}
       {activeGroup && (
         <div className="desktop-subnav" style={{
-          background: 'rgba(15, 23, 42, 0.65)',
+          background: 'var(--bg-secondary)',
           borderBottom: '1px solid var(--border-subtle)',
           backdropFilter: 'blur(8px)'
         }}>
