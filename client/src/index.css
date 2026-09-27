@@ -436,6 +436,64 @@ button {
 }
 
 /* ==============================================================================
+   HEADER & NAVBAR ARCHITECTURE
+   ============================================================================== */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  width: 100%;
+}
+
+.navbar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 68px;
+  width: 100%;
+  gap: 1rem;
+}
+
+.navbar-brand-sub {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.desktop-family-select {
+  display: block;
+}
+
+.mobile-family-select-strip {
+  display: none !important;
+}
+
+.mobile-family-strip-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.45rem 0.8rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-hover);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--text-primary);
+}
+
+.mobile-family-strip-btn:hover {
+  background: var(--bg-card);
+  border-color: var(--accent-cyan);
+}
+
+/* ==============================================================================
    MOBILE & RESPONSIVE ADAPTATIONS
    ============================================================================== */
 
@@ -503,7 +561,19 @@ html, body {
   }
 
   .navbar-container {
-    height: 60px !important;
+    height: 56px !important;
+    gap: 0.5rem !important;
+  }
+
+  .desktop-family-select {
+    display: none !important;
+  }
+
+  .mobile-family-select-strip {
+    display: block !important;
+    position: relative;
+    padding: 0 0 0.55rem 0;
+    width: 100%;
   }
 
   .navbar-brand-sub {
@@ -516,14 +586,6 @@ html, body {
 
   .navbar-user-info {
     display: none !important;
-  }
-
-  .family-select-btn {
-    max-width: 130px !important;
-  }
-
-  .family-select-text {
-    max-width: 80px !important;
   }
 
   .mobile-bottom-nav {
@@ -552,22 +614,17 @@ html, body {
     padding: 0.95rem;
   }
 
+  .navbar-container {
+    height: 52px !important;
+    gap: 0.35rem !important;
+  }
+
   .navbar-brand-text {
     font-size: 1.1rem !important;
   }
 
-  .family-select-btn {
-    max-width: 105px !important;
-    padding: 0.35rem 0.5rem !important;
-    font-size: 0.75rem !important;
-  }
-
-  .family-select-text {
-    max-width: 58px !important;
-  }
-
   .navbar-actions {
-    gap: 0.4rem !important;
+    gap: 0.35rem !important;
   }
 
   .grid-cols-auto {
